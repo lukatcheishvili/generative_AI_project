@@ -11,6 +11,50 @@ conditional logic, a refinement loop, and human-in-the-loop**.
 
 ---
 
+## Project requirements
+
+Build a working **Gen AI system that solves a real business problem**. The emphasis is on the
+**business problem + backend/agent logic** — not the frontend.
+
+**Scope**
+- The system may be single-agent or multi-agent, and may use tools, memory, routing, loops, or
+  human approval as the use case requires.
+- Any tools or frameworks are allowed — raw API calls, LangChain, LangGraph, or any combination.
+- A frontend is optional. Something simple (e.g. React) is fine; frontend sophistication is **not** evaluated.
+
+**Deliverable: a team presentation (20–30 min)** covering:
+- the business problem and why it matters,
+- the AI/agent system that was built,
+- the technical implementation,
+- how the system works end to end.
+- At least one member must present **both** the business problem **and** the technical solution.
+
+**What the instructor evaluates** — that you understand the architecture underneath:
+why single-agent vs multi-agent, how tools are called, how routing works, whether you use
+state/memory, whether human-in-the-loop is needed, and why the graph/workflow is structured
+the way it is. A strong project has a clear use case, a real reason agents are useful, and a
+workflow that is more than one prompt — combining tool use, structured flow, conditional
+logic, a refinement loop, and/or a review/approval step. Pick something narrow enough to
+finish, easy to explain, and demo something reliable rather than flashy.
+
+### How this project meets them
+
+| Requirement | Where it's satisfied |
+|---|---|
+| Real business problem | Support-ticket triage + drafting with a human approval gate (see below) |
+| Backend / agent logic is the focus | All logic in `src/`; no UI to distract from the graph |
+| Single- vs multi-agent (justified) | Multi-agent: router + 4 specialists + critic — rationale in `docs/architecture.md` §1 |
+| Tool calls | `lookup_order`, `search_kb`, `check_refund_policy` in `src/tools.py` |
+| Routing | Conditional edges from `router` → specialist (`src/graph.py`) |
+| State / memory | Typed `SupportState` + `MemorySaver` checkpointer per thread |
+| Conditional logic + refinement loop | `critic` → `revise` → `critic`, bounded by `MAX_REVISIONS` |
+| Review / approval (human-in-the-loop) | `interrupt_before=["human_approval"]` pauses before sending |
+| Workflow is more than one prompt | 9-node graph with routing, a loop, and an interrupt |
+| Narrow, reliable, easy to explain | Runs offline in `mock` mode; **12 passing tests**; node-by-node script in `docs/` |
+| Framework freedom | Built on LangGraph; provider-agnostic across OpenAI / Anthropic / mock |
+
+---
+
 ## The business problem
 
 Support teams drown in repetitive tickets. Triage (reading, categorizing, looking up the
@@ -36,76 +80,4 @@ START
   → router            classify ticket  →  billing | refund | technical | general
   → specialist        calls its tools, drafts a reply
   → critic            reviews the draft
-        ├─ REVISE ──► revise ──► critic        (bounded refinement loop, max 2)
-        └─ APPROVED ─► human_approval  ⟸ INTERRUPT (execution pauses here)
-  → finalize          applies human edit (if any), "sends" the reply
-  → END
-```
-
-| Concept the course asks about | Where it lives |
-|---|---|
-| Single- vs multi-agent | Multi-agent: a router + 4 specialists + a critic (`src/agents.py`) |
-| How tools are called | Specialists call `lookup_order`, `search_kb`, `check_refund_policy` (`src/tools.py`) |
-| How routing works | `add_conditional_edges("router", route_decision, …)` (`src/graph.py`) |
-| State / memory | Typed `SupportState` + `MemorySaver` checkpointer per thread |
-| Conditional logic / loops | `critic_decision` → revise-loop, bounded by `MAX_REVISIONS` |
-| Human-in-the-loop | `interrupt_before=["human_approval"]` pauses before sending |
-
-See [`docs/architecture.md`](docs/architecture.md) for the node-by-node justification you'll
-present.
-
----
-
-## Quick start
-
-```bash
-# 1. install
-pip install -r requirements.txt
-
-# 2. configure (mock mode needs no API key)
-cp .env.example .env
-
-# 3. run the demo — works with zero API keys in mock mode
-python -m src.main "I think I was overcharged on order 1002 and want a refund"
-
-# 4. run the test suite (also mock mode, no network)
-pytest -q
-```
-
-### Using a real model
-
-Edit `.env`:
-
-```bash
-LLM_PROVIDER=openai            # or: anthropic
-OPENAI_API_KEY=sk-...          # or ANTHROPIC_API_KEY=sk-ant-...
-```
-
-The graph does not change — only the model behind the `LLMClient` seam (`src/config.py`)
-does. That is the whole argument for the provider-agnostic design.
-
----
-
-## Project layout
-
-```
-generative_AI_project/
-├── src/
-│   ├── config.py     # provider-agnostic LLM (openai | anthropic | mock)
-│   ├── state.py      # typed graph state = the system's memory
-│   ├── tools.py      # mock order DB, KB, refund-policy tools
-│   ├── agents.py     # router, specialists, critic, revise, human gate, finalize
-│   ├── graph.py      # LangGraph assembly: nodes, edges, interrupt, checkpointer
-│   └── main.py       # CLI runner with the human-approval step
-├── tests/test_system.py   # 12 tests: tools, routing, loop, human-in-the-loop
-├── docs/architecture.md   # presentation-ready deep dive
-├── requirements.txt
-├── .env.example
-└── .gitignore        # .env is ignored
-```
-
-## Mock mode
-
-`LLM_PROVIDER=mock` swaps the real model for a deterministic rule-based stand-in. The graph,
-tools, routing, loop, and interrupt all run unchanged — so the architecture is testable and
-demoable offline, with no tokens spent. Flip one env var to go live.
+        ├─ REVISE ──► revise ──► critic        (bounded refinement loop
