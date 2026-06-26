@@ -13,45 +13,60 @@ conditional logic, a refinement loop, and human-in-the-loop**.
 
 ## Project requirements
 
-Build a working **Gen AI system that solves a real business problem**. The emphasis is on the
-**business problem + backend/agent logic** — not the frontend.
+These are the **official requirements** from the *Generative AI — Final Project Guidelines*
+(IE University). The deliverable is a **functional MVP plus a final presentation** that solves a
+real-world business problem with a GenAI / agentic solution. Both an analytical backend **and**
+a user-facing frontend are required.
 
-**Scope**
-- The system may be single-agent or multi-agent, and may use tools, memory, routing, loops, or
-  human approval as the use case requires.
-- Any tools or frameworks are allowed — raw API calls, LangChain, LangGraph, or any combination.
-- A frontend is optional. Something simple (e.g. React) is fine; frontend sophistication is **not** evaluated.
+**Backend (the AI model)**
+- Must be powered by a **GenAI or agentic architecture**.
 
-**Deliverable: a team presentation (20–30 min)** covering:
-- the business problem and why it matters,
-- the AI/agent system that was built,
-- the technical implementation,
-- how the system works end to end.
-- At least one member must present **both** the business problem **and** the technical solution.
+**Frontend & integration (required — not optional)**
+- You **must** build an interface that lets a **non-technical user** interact with the model.
+  Vibe-coding tools (Cursor, v0, Bolt.new, Streamlit) are explicitly encouraged to build it fast.
+- **Seamless end-to-end integration is a graded pillar:** the frontend must pass user input to the
+  GenAI backend and display results in **real time**. Frontend *sophistication* isn't graded —
+  working, dynamic integration is.
 
-**What the instructor evaluates** — that you understand the architecture underneath:
-why single-agent vs multi-agent, how tools are called, how routing works, whether you use
-state/memory, whether human-in-the-loop is needed, and why the graph/workflow is structured
-the way it is. A strong project has a clear use case, a real reason agents are useful, and a
-workflow that is more than one prompt — combining tool use, structured flow, conditional
-logic, a refinement loop, and/or a review/approval step. Pick something narrow enough to
-finish, easy to explain, and demo something reliable rather than flashy.
+**Deliverables (submit two assets on the campus platform)**
+1. **GitHub repository link** — clean, documented code for **both** the backend/model and the
+   frontend app, plus a brief `README.md` on how to run it.
+2. **Final presentation deck** — slides, PDF format preferred.
+
+**Presentation day rules**
+- **Exactly 15 minutes** per group — pitch + live MVP demo + brief Q&A. Strictly enforced.
+- **Every member must actively speak.**
+- A **live MVP demo** is expected; static screenshots count against you.
+
+### Grading rubric (weights)
+
+| Pillar | Weight | What's assessed |
+|---|---|---|
+| Technical Depth & Model Architecture | **25%** | Framework justification (RAG vs fine-tuning, single- vs multi-agent, tool use), data prep / feature engineering, eval metrics (LLM-as-a-judge, RAGAS, correctness, latency), guardrails for hallucination / security / agent loops |
+| MVP Integration & Frontend UX | **25%** | Seamless, real-time frontend↔backend integration; intuitive, professional interface |
+| Business Use Case & Value Proposition | **20%** | Compelling, realistic problem; quantified value (ROI, cost, efficiency); MVP usability |
+| Presentation & Team Delivery | **20%** | Executive-level pitch; smooth speaker transitions; all members speak |
+| Live Demo & Time Management | **10%** | Working live demo; finishing within the 15-minute limit |
 
 ### How this project meets them
 
-| Requirement | Where it's satisfied |
-|---|---|
-| Real business problem | Support-ticket triage + drafting with a human approval gate (see below) |
-| Backend / agent logic is the focus | All logic in `src/`; no UI to distract from the graph |
-| Single- vs multi-agent (justified) | Multi-agent: router + 4 specialists + critic — rationale in `docs/architecture.md` §1 |
-| Tool calls | `lookup_order`, `search_kb`, `check_refund_policy` in `src/tools.py` |
-| Routing | Conditional edges from `router` → specialist (`src/graph.py`) |
-| State / memory | Typed `SupportState` + `MemorySaver` checkpointer per thread |
-| Conditional logic + refinement loop | `critic` → `revise` → `critic`, bounded by `MAX_REVISIONS` |
-| Review / approval (human-in-the-loop) | `interrupt_before=["human_approval"]` pauses before sending |
-| Workflow is more than one prompt | 9-node graph with routing, a loop, and an interrupt |
-| Narrow, reliable, easy to explain | Runs offline in `mock` mode; **12 passing tests**; node-by-node script in `docs/` |
-| Framework freedom | Built on LangGraph; provider-agnostic across OpenAI / Anthropic / mock |
+| Requirement | Status | Where it stands |
+|---|---|---|
+| GenAI / agentic backend | ✅ Done | LangGraph multi-agent graph in `src/` |
+| Real, compelling business problem | ✅ Done | Support-ticket triage + drafting with a human approval gate (see below) |
+| Framework justification | ✅ Done | Multi-agent rationale in `docs/architecture.md` §1, §8 |
+| Tool use | ✅ Done | `lookup_order`, `search_kb`, `check_refund_policy` (`src/tools.py`) |
+| Routing | ✅ Done | Conditional edges from `router` → specialist (`src/graph.py`) |
+| State / memory | ✅ Done | Typed `SupportState` + `MemorySaver` checkpointer per thread |
+| Bounded refinement loop | ✅ Done | `critic` → `revise` → `critic`, bounded by `MAX_REVISIONS` |
+| Human-in-the-loop / guardrails | ✅ Done | `interrupt_before=["human_approval"]` pauses before sending |
+| Tests / reliability | ✅ Done | **12 passing tests**; runs offline in `mock` mode |
+| **Frontend for non-technical users** | ⬜ **TODO** | Not built yet — now **required** (25%). Plan: a Streamlit UI wrapping `src/main.py` |
+| **Real-time frontend↔backend integration** | ⬜ **TODO** | Depends on the frontend above; must show live results, not screenshots |
+| **Quantified value proposition** | ⚠️ Partial | Qualitative today; add ROI / time-saved / cost numbers for the pitch |
+| **Eval metrics (LLM-as-judge, latency)** | ⚠️ Partial | Add a small evaluation harness to demonstrate correctness/latency |
+| **Presentation deck (PDF)** | ⬜ **TODO** | Separate graded deliverable |
+| **15-min, all-speak, live demo** | ⬜ Plan | Assign speaking parts; rehearse to the strict 15-minute limit |
 
 ---
 
