@@ -1,83 +1,93 @@
-# Support Triage Agent — Generative AI Final Project
+# BrewPage — AI Marketing Strategy → Landing Page Engine
 
-A **multi-agent customer-support triage system** built with **LangGraph**. It takes a raw
-customer ticket and runs it through a real agent workflow — classification, routing to a
-specialist agent, tool calls against (mock) backends, a critic/refinement loop, and a
-**human approval gate** before any reply is "sent."
+Individual project for **Big Data & AI in Marketing**.
+Topic: *Generative AI in content creation / AI-powered marketing workflows.*
 
-The project is deliberately narrow so it actually works end to end, while still exercising
-every architectural concept the course cares about: **routing, tool use, state/memory,
-conditional logic, a refinement loop, and human-in-the-loop**.
-
----
-
-## Project requirements
-
-Build a working **Gen AI system that solves a real business problem**. The emphasis is on the
-**business problem + backend/agent logic** — not the frontend.
-
-**Scope**
-- The system may be single-agent or multi-agent, and may use tools, memory, routing, loops, or
-  human approval as the use case requires.
-- Any tools or frameworks are allowed — raw API calls, LangChain, LangGraph, or any combination.
-- A frontend is optional. Something simple (e.g. React) is fine; frontend sophistication is **not** evaluated.
-
-**Deliverable: a team presentation (20–30 min)** covering:
-- the business problem and why it matters,
-- the AI/agent system that was built,
-- the technical implementation,
-- how the system works end to end.
-- At least one member must present **both** the business problem **and** the technical solution.
-
-**What the instructor evaluates** — that you understand the architecture underneath:
-why single-agent vs multi-agent, how tools are called, how routing works, whether you use
-state/memory, whether human-in-the-loop is needed, and why the graph/workflow is structured
-the way it is. A strong project has a clear use case, a real reason agents are useful, and a
-workflow that is more than one prompt — combining tool use, structured flow, conditional
-logic, a refinement loop, and/or a review/approval step. Pick something narrow enough to
-finish, easy to explain, and demo something reliable rather than flashy.
-
-### How this project meets them
-
-| Requirement | Where it's satisfied |
-|---|---|
-| Real business problem | Support-ticket triage + drafting with a human approval gate (see below) |
-| Backend / agent logic is the focus | All logic in `src/`; no UI to distract from the graph |
-| Single- vs multi-agent (justified) | Multi-agent: router + 4 specialists + critic — rationale in `docs/architecture.md` §1 |
-| Tool calls | `lookup_order`, `search_kb`, `check_refund_policy` in `src/tools.py` |
-| Routing | Conditional edges from `router` → specialist (`src/graph.py`) |
-| State / memory | Typed `SupportState` + `MemorySaver` checkpointer per thread |
-| Conditional logic + refinement loop | `critic` → `revise` → `critic`, bounded by `MAX_REVISIONS` |
-| Review / approval (human-in-the-loop) | `interrupt_before=["human_approval"]` pauses before sending |
-| Workflow is more than one prompt | 9-node graph with routing, a loop, and an interrupt |
-| Narrow, reliable, easy to explain | Runs offline in `mock` mode; **12 passing tests**; node-by-node script in `docs/` |
-| Framework freedom | Built on LangGraph; provider-agnostic across OpenAI / Anthropic / mock |
+A **two-agent LangGraph pipeline** for independent coffee shops: it makes the marketing
+*decisions* a strategist would (positioning, audience, value proposition, tone, conversion
+goal) before generating a single line of copy, then renders those decisions into a real,
+styled landing page — optionally built around the shop's own uploaded photos.
 
 ---
 
-## The business problem
+## The marketing problem
 
-Support teams drown in repetitive tickets. Triage (reading, categorizing, looking up the
-order, drafting a first response) is slow and inconsistent, but fully automating replies is
-risky — a wrong refund or a bad answer costs money and trust.
-
-**The wedge:** automate the *triage and drafting*, keep a *human in the loop* for the final
-send. The agent does the 80% that is mechanical; the human approves or edits in seconds.
+Independent coffee shops need a web presence but can't afford a strategist or an agency.
+Generic AI site builders generate templated pages with **no marketing strategy** behind
+them — no positioning, no audience targeting, no conversion goal. This project builds an AI
+that makes the *marketing decisions* first, then renders them into a landing page.
 
 ## Why agents (not a single prompt)
 
-A single prompt can't reliably *look up an order*, *apply a refund policy*, *decide which
-specialist logic applies*, *self-review*, and *pause for a human*. Those are distinct
-responsibilities with branching and loops between them — exactly what an agent graph models.
-Each node is small and independently justifiable, which is the point.
-
----
+Strategy and execution are different jobs. A single prompt that's asked to "write a landing
+page" collapses both into one pass and quietly defaults to generic stock-cafe copy. Splitting
+them into two graph nodes forces the strategic decisions (audience, positioning, tone,
+conversion goal) to happen *before* — and independently of — the copy/design execution that
+has to act on them.
 
 ## Architecture at a glance
 
 ```
 START
-  → router            classify ticket  →  billing | refund | technical | general
-  → specialist        calls its tools, drafts a reply
-  → critic            reviews the draft
-        ├─ REVISE ──► revise ──► critic        (bounded refinement loop
+  → strategist     turns raw owner notes into marketing decisions (JSON)
+  → generator      executes that strategy as a complete, styled HTML page,
+                    using uploaded photos (if any) instead of placeholder
+                    gradients
+END
+```
+
+Built with **LangGraph** (`src/graph.py`): a `StateGraph` over a typed `PipelineState`,
+streamed node-by-node so the Streamlit UI can show live per-step progress.
+
+| Requirement | Where it's satisfied |
+|---|---|
+| Real business problem | Strategy-driven landing pages for small cafes that can't afford an agency |
+| Backend / agent logic | `src/agents.py` (nodes), `src/graph.py` (graph assembly), `src/state.py` |
+| Multi-agent, justified | Strategist (decisions) → Generator (execution) — kept separate so copy can't skip the strategy step |
+| State | Typed `PipelineState` (`shop`, `images`, `strategy`, `html`) threaded through the graph |
+| Real-time frontend↔backend integration | `frontend/app.py` streams the graph via `stream_mode="updates"` and updates an `st.status` box live |
+| User input → real artifact | Optional photo uploads are resized, embedded as base64, and placed into the generated HTML in place of placeholder gradients |
+
+---
+
+## Run it
+
+```bash
+pip install -r requirements.txt
+streamlit run frontend/app.py
+```
+
+Copy `.env.example` to `.env` and add a free Gemini key
+(aistudio.google.com/apikey): `GEMINI_API_KEY=your_key`. (When deployed on Streamlit
+Community Cloud, set it instead via the app's Secrets panel.)
+
+Fill in the coffee shop details, optionally upload a few photos, hit **Generate page**, and
+you get two tabs: the live page and the strategy behind it. The page is downloadable as a
+self-contained HTML file.
+
+There's also a CLI runner for testing the graph without the UI:
+
+```bash
+python -m src.main --name "Ember & Oak" --location "Lavapiés, Madrid" \
+  --differentiator "Single-origin, in-house roasted" \
+  --vibe "Cozy, slow, lots of plants" --target "Remote workers and students"
+```
+
+## What to put in the report
+
+1. **Problem** — small cafes need strategy-driven web presence, not templates.
+2. **Framework** — frame as a *strategy → execution* AI pipeline. Connect to course content
+   on GenAI in content creation and marketing automation.
+3. **System** — the Strategist/Generator split, the LangGraph state, the photo pipeline.
+4. **Demo / results** — screenshot the strategy tab + the rendered page. Run it on 3-4
+   different cafes (with and without photos) to show it generalizes.
+5. **Critical discussion** — where the strategy is generic vs. genuinely insightful,
+   brand-safety, and why a human still validates before publishing.
+6. **Conclusion** — what this says about GenAI lowering the cost of marketing strategy for
+   small businesses.
+
+## To make it more "yours"
+
+- Run it on a few real local Madrid cafes and compare the strategies it produces.
+- Tweak the Strategist prompt in `src/agents.py` to enforce a positioning framework you like.
+- Try it with and without uploaded photos on the same shop to compare results.
