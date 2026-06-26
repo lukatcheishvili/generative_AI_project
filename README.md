@@ -52,21 +52,21 @@ a user-facing frontend are required.
 
 | Requirement | Status | Where it stands |
 |---|---|---|
-| GenAI / agentic backend | ✅ Done | LangGraph multi-agent graph in `src/` |
-| Real, compelling business problem | ✅ Done | Support-ticket triage + drafting with a human approval gate (see below) |
-| Framework justification | ✅ Done | Multi-agent rationale in `docs/architecture.md` §1, §8 |
-| Tool use | ✅ Done | `lookup_order`, `search_kb`, `check_refund_policy` (`src/tools.py`) |
-| Routing | ✅ Done | Conditional edges from `router` → specialist (`src/graph.py`) |
-| State / memory | ✅ Done | Typed `SupportState` + `MemorySaver` checkpointer per thread |
-| Bounded refinement loop | ✅ Done | `critic` → `revise` → `critic`, bounded by `MAX_REVISIONS` |
-| Human-in-the-loop / guardrails | ✅ Done | `interrupt_before=["human_approval"]` pauses before sending |
-| Tests / reliability | ✅ Done | **12 passing tests**; runs offline in `mock` mode |
-| **Frontend for non-technical users** | ⬜ **TODO** | Not built yet — now **required** (25%). Plan: a Streamlit UI wrapping `src/main.py` |
-| **Real-time frontend↔backend integration** | ⬜ **TODO** | Depends on the frontend above; must show live results, not screenshots |
-| **Quantified value proposition** | ⚠️ Partial | Qualitative today; add ROI / time-saved / cost numbers for the pitch |
-| **Eval metrics (LLM-as-judge, latency)** | ⚠️ Partial | Add a small evaluation harness to demonstrate correctness/latency |
-| **Presentation deck (PDF)** | ⬜ **TODO** | Separate graded deliverable |
-| **15-min, all-speak, live demo** | ⬜ Plan | Assign speaking parts; rehearse to the strict 15-minute limit |
+| GenAI / agentic backend | Done | LangGraph multi-agent graph in `src/` |
+| Real, compelling business problem | Done | Support-ticket triage + drafting with a human approval gate (see below) |
+| Framework justification | Done | Multi-agent rationale in `docs/architecture.md` §1, §8 |
+| Tool use | Done | `lookup_order`, `search_kb`, `check_refund_policy` (`src/tools.py`) |
+| Routing | Done | Conditional edges from `router` → specialist (`src/graph.py`) |
+| State / memory | Done | Typed `SupportState` + `MemorySaver` checkpointer per thread |
+| Bounded refinement loop | Done | `critic` → `revise` → `critic`, bounded by `MAX_REVISIONS` |
+| Human-in-the-loop / guardrails | Done | `interrupt_before=["human_approval"]` pauses before sending |
+| Tests / reliability | Done | **12 passing tests**; runs offline in `mock` mode |
+| **Frontend for non-technical users** | **TODO** | Not built yet — now **required** (25%). Plan: a Streamlit UI wrapping `src/main.py` |
+| **Real-time frontend↔backend integration** | **TODO** | Depends on the frontend above; must show live results, not screenshots |
+| **Quantified value proposition** | Partial | Qualitative today; add ROI / time-saved / cost numbers for the pitch |
+| **Eval metrics (LLM-as-judge, latency)** | Partial | Add a small evaluation harness to demonstrate correctness/latency |
+| **Presentation deck (PDF)** | **TODO** | Separate graded deliverable |
+| **15-min, all-speak, live demo** | Plan | Assign speaking parts; rehearse to the strict 15-minute limit |
 
 ---
 
