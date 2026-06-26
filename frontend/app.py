@@ -6,6 +6,9 @@ Pipeline (a LangGraph graph, see src/graph.py):
         positioning, target customer, value proposition, tone, conversion goal.
   2. GENERATOR node   -> turns that strategy (+ any uploaded photos) into a
         real, styled landing page.
+  3. EDITOR node       -> (on demand) revises the page based on your feedback,
+        in a loop — give notes (and optionally new photos), get a revised
+        page, repeat.
 
 Run:  streamlit run frontend/app.py
 Needs: GEMINI_API_KEY set in a .env file in the project root
@@ -22,8 +25,8 @@ from dotenv import load_dotenv
 # Add the project root to the Python path so 'src' can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.graph import STEP_LABELS, get_pipeline
-from src.agents import image_to_data_uri
+from src.graph import STEP_LABELS, get_pipeline, get_editor_pipeline
+from src.agents import image_to_data_uri, _inject_images
 
 load_dotenv()
 
@@ -37,6 +40,20 @@ def run_pipeline(shop, images, status_box):
             state.update(partial)
             status_box.write(STEP_LABELS.get(node_name, node_name))
     return state
+
+
+def run_editor(shop, strategy, html_template, images, new_images, feedback, status_box):
+    """One pass of the editor node: applies feedback to the current page and
+    returns the revised html_template (still holding IMAGE_n tokens). Any
+    new_images are appended after the existing ones so token numbering the
+    editor was told about lines up with the final render order."""
+    state = {
+        "shop": shop, "strategy": strategy, "html_template": html_template,
+        "images": images, "new_images": new_images, "feedback": feedback,
+    }
+    result = get_editor_pipeline().invoke(state)
+    status_box.write("Editor applied your feedback")
+    return result["html_template"]
 
 
 # ----------------------------------------------------------------------------
@@ -95,7 +112,7 @@ if not api_key:
              "restart the app.")
 
 with st.expander("Pipeline"):
-    st.markdown("**Pipeline:** Strategist → Generator")
+    st.markdown("**Pipeline:** Strategist → Generator → (on demand) Editor")
 
 st.markdown('<hr class="bp-rule">', unsafe_allow_html=True)
 st.subheader("Tell me about the coffee shop")
@@ -147,22 +164,57 @@ if st.button("Generate page", type="primary", disabled=not api_key):
         result = run_pipeline(shop, images, status_box)
         status_box.update(label="Pipeline complete", state="complete")
 
-    # stash for the report tab
+    # stash for the report tab — html_template keeps IMAGE_n tokens so the
+    # editor loop below never has to push base64 photos back through the LLM
     st.session_state["last"] = {
         "shop": shop.copy(),
+        "images": images,
         "strategy": result["strategy"],
-        "html": result["html"],
+        "html_template": result["html_template"],
     }
 
 if "last" in st.session_state:
     data = st.session_state["last"]
     generated_shop = data.get("shop", shop)
+    rendered_html = _inject_images(data["html_template"], data["images"])
     tab_page, tab_strategy = st.tabs(["Page", "Strategy"])
 
     with tab_page:
-        components.html(data["html"], height=700, scrolling=True)
-        st.download_button("Download page (HTML)", data["html"],
+        components.html(rendered_html, height=700, scrolling=True)
+        st.download_button("Download page (HTML)", rendered_html,
                            file_name="landing_page.html", mime="text/html")
+
+        st.markdown('<hr class="bp-rule">', unsafe_allow_html=True)
+        st.markdown("**Revise this page**")
+        st.caption("Tell the editor agent what to change — it edits the "
+                   "existing page rather than starting over, so the rest "
+                   "stays put. Give more feedback to keep refining.")
+        feedback = st.text_area(
+            "Your feedback", key="editor_feedback", label_visibility="collapsed",
+            placeholder="e.g. Add a new section showcasing our brownies, swap "
+                        "the social proof line for something about the "
+                        "pour-over bar, and make the CTA button bigger.",
+        )
+        uploader_key = f"editor_new_photos_{st.session_state.get('editor_uploader_gen', 0)}"
+        new_photos = st.file_uploader(
+            "Add photos for this revision (optional — e.g. a brownie photo "
+            "for a new section)",
+            type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True,
+            key=uploader_key,
+        )
+        if st.button("Apply revision", disabled=not (api_key and feedback.strip())):
+            new_images = [image_to_data_uri(f.getvalue()) for f in (new_photos or [])]
+            with st.status("Editor agent is revising the page...", expanded=True) as ebox:
+                new_template = run_editor(
+                    data["shop"], data["strategy"], data["html_template"],
+                    data["images"], new_images, feedback, ebox,
+                )
+                ebox.update(label="Revision applied", state="complete")
+            data["html_template"] = new_template
+            data["images"] = data["images"] + new_images
+            st.session_state["last"] = data
+            st.session_state["editor_uploader_gen"] = st.session_state.get("editor_uploader_gen", 0) + 1
+            st.rerun()
 
     with tab_strategy:
         s = data["strategy"]

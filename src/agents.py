@@ -1,10 +1,12 @@
 """
-BrewPage graph nodes — the two agents in the pipeline.
+BrewPage graph nodes — the three agents in the pipeline.
 
   1. strategist_node  -> makes the marketing decisions a strategist would:
         positioning, target customer, value proposition, tone, conversion goal.
   2. generator_node   -> turns that strategy (+ any uploaded photos) into a
         real, styled, single-file HTML landing page.
+  3. editor_node       -> (on demand) revises the page based on owner
+        feedback, optionally adding newly uploaded photos.
 """
 
 import base64
@@ -222,5 +224,81 @@ RULES:
 Return ONLY the raw HTML, starting with <!DOCTYPE html>. No markdown fences."""
     raw = call_model(prompt, temperature=0.8)
     html = raw.strip().replace("```html", "").replace("```", "").strip()
-    html = _inject_images(html, images)
-    return {"html": _open_links_in_new_tab(html)}
+    # IMAGE_n tokens are kept as-is here (not swapped for real base64 yet) so
+    # the editor node below — and any future revision pass — never has to
+    # push large image data through the model again.
+    return {"html_template": _open_links_in_new_tab(html)}
+
+
+# ----------------------------------------------------------------------------
+# NODE 3 — EDITOR  (applies owner feedback to an existing page)
+# ----------------------------------------------------------------------------
+def _editor_images_block(existing_count, new_count):
+    lines = []
+    if existing_count:
+        existing_tokens = ", ".join(f"IMAGE_{i}" for i in range(1, existing_count + 1))
+        lines.append(
+            f"EXISTING PHOTOS already on the page: {existing_tokens}. Leave "
+            "these tokens exactly where they are — do not remove, rename, or "
+            "move them between sections — unless the feedback explicitly "
+            "asks to change or remove that specific photo."
+        )
+    if new_count:
+        start, end = existing_count + 1, existing_count + new_count
+        new_tokens = ", ".join(f"IMAGE_{i}" for i in range(start, end + 1))
+        lines.append(
+            f"NEW PHOTOS the owner just added for this revision: {new_count} "
+            f"photo(s), usable ONLY as the tokens {new_tokens} (one new "
+            '<img src="IMAGE_n"> per photo). Use these to satisfy the '
+            "feedback below — e.g. if it asks for a new section or visual, "
+            "add it using one of these new tokens, styled consistently with "
+            "the rest of the page (object-fit: cover, matching rounded-"
+            "corner/border treatment)."
+        )
+    else:
+        lines.append(
+            "No new photos were provided this round. Do not invent any new "
+            "IMAGE_n token — if the feedback asks for a new visual with no "
+            "new photo available, use a placeholder gradient panel instead."
+        )
+    return "\n".join(lines)
+
+
+def editor_node(state: PipelineState) -> dict:
+    shop = state["shop"]
+    strategy = state["strategy"]
+    html_template = state["html_template"]
+    feedback = state["feedback"]
+    existing_images = state.get("images") or []
+    new_images = state.get("new_images") or []
+    cta_link = cta_link_for(shop)
+    prompt = f"""You are a meticulous web editor revising an existing AI-generated
+landing page for a coffee shop, based on the owner's review notes.
+
+SHOP: {shop['name']} — {shop['location']}
+STRATEGY (these decisions still stand — don't contradict them unless the
+feedback explicitly asks you to):
+{json.dumps(strategy, indent=2)}
+
+CURRENT PAGE — a single self-contained HTML file. Some <img> tags use
+placeholder tokens (IMAGE_1, IMAGE_2, ...) instead of real image data:
+{html_template}
+
+{_editor_images_block(len(existing_images), len(new_images))}
+
+OWNER'S FEEDBACK — apply ONLY what's asked below; make the minimum other
+edits needed for the result to stay coherent, and keep everything else
+(structure, design system, fonts, colors, CTA links, untouched IMAGE_n
+tokens) intact:
+{feedback}
+
+RULES:
+- Still ONE self-contained HTML file, all CSS in a <style> tag.
+- EVERY CTA button must keep using `<a href="{cta_link}">` — never weaken it
+  to href="#".
+- Follow the PHOTOS rules above for any IMAGE_n usage.
+- Return ONLY the full updated raw HTML, starting with <!DOCTYPE html>. No
+  markdown fences, no commentary."""
+    raw = call_model(prompt, temperature=0.5)
+    html = raw.strip().replace("```html", "").replace("```", "").strip()
+    return {"html_template": _open_links_in_new_tab(html)}

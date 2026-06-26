@@ -1,16 +1,19 @@
 """
 BrewPage pipeline, expressed as a LangGraph graph.
 
-Two nodes, run in a straight line:
+Generation pipeline (two nodes, run in a straight line):
   strategist -> generator
 
-The graph is compiled once and reused; frontend/app.py streams it
-node-by-node so the UI can show per-step progress.
+Editor loop (one node, invoked once per revision from the UI):
+  editor
+
+Each graph is compiled once and reused; frontend/app.py streams/invokes them
+so the UI can show per-step progress and apply feedback-driven revisions.
 """
 
 from langgraph.graph import StateGraph, START, END
 
-from src.agents import strategist_node, generator_node
+from src.agents import strategist_node, generator_node, editor_node
 from src.state import PipelineState
 
 STEP_LABELS = {
@@ -19,6 +22,7 @@ STEP_LABELS = {
 }
 
 _pipeline = None
+_editor_pipeline = None
 
 
 def build_graph():
@@ -36,3 +40,18 @@ def get_pipeline():
     if _pipeline is None:
         _pipeline = build_graph()
     return _pipeline
+
+
+def build_editor_graph():
+    graph = StateGraph(PipelineState)
+    graph.add_node("editor", editor_node)
+    graph.add_edge(START, "editor")
+    graph.add_edge("editor", END)
+    return graph.compile()
+
+
+def get_editor_pipeline():
+    global _editor_pipeline
+    if _editor_pipeline is None:
+        _editor_pipeline = build_editor_graph()
+    return _editor_pipeline

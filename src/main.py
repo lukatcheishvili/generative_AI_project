@@ -38,7 +38,7 @@ def main():
 
     print("\nStrategy:\n" + json.dumps(state["strategy"], indent=2))
     with open(args.out, "w") as f:
-        f.write(state["html"])
+        f.write(state["html_template"])
     print(f"\nLanding page written to {args.out}")
 
 
