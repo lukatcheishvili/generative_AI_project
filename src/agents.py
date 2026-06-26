@@ -1,160 +1,121 @@
-"""
-The nodes of the graph.
+from langchain_core.messages import SystemMessage, HumanMessage
+from src.state import HotelIntelligenceState
+from src.config import get_llm
+from src.tools import search_market_data, fetch_hotel_reviews
 
-Each function below is a LangGraph node: it takes the current SupportState and returns a
-partial state update. Keeping nodes small and single-purpose is what makes the workflow
-explainable ("here is exactly what each step does and why").
+def _get_text(content):
+    if isinstance(content, list):
+        return " ".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in content])
+    return str(content)
 
-Node roster
------------
-- router:           LLM classifies the ticket -> billing | refund | technical | general
-- billing_agent:    looks up the order, drafts a billing-specific reply
-- refund_agent:     checks refund policy (tool), drafts a refund decision
-- technical_agent:  searches the KB (tool), drafts troubleshooting steps
-- general_agent:    fallback, drafts a general reply
-- critic:           reviews the draft; either APPROVED or sends feedback (refinement loop)
-- finalize:         applies any human edit and produces the reply that gets "sent"
-"""
-
-from __future__ import annotations
-
-from .config import get_llm, normalize_category
-from .state import SupportState
-from .tools import lookup_order, search_kb, check_refund_policy, extract_order_id
-
-MAX_REVISIONS = 2  # bound the refinement loop so it can never spin forever
-
-
-# --------------------------------------------------------------------------- #
-# Routing                                                                     #
-# --------------------------------------------------------------------------- #
-def router(state: SupportState) -> dict:
-    llm = get_llm()
-    ticket = state["ticket"]
-    system = (
-        "You are a support router. Classify the ticket into exactly one category: "
-        "billing, refund, technical, or general. Reply with only the category word."
-    )
-    raw = llm.complete(system, ticket)
-    category = normalize_category(raw)
-    order_id = state.get("order_id") or extract_order_id(ticket)
-    return {
-        "category": category,
-        "order_id": order_id,
-        "log": [f"router -> category={category}, order_id={order_id or 'n/a'}"],
-    }
-
-
-def route_decision(state: SupportState) -> str:
-    """Conditional edge: map category -> the specialist node name."""
-    return {
-        "billing": "billing_agent",
-        "refund": "refund_agent",
-        "technical": "technical_agent",
-        "general": "general_agent",
-    }[state["category"]]
-
-
-# --------------------------------------------------------------------------- #
-# Specialist agents (each calls its tools, then drafts)                        #
-# --------------------------------------------------------------------------- #
-def _draft_reply(context: str) -> str:
-    llm = get_llm()
-    system = (
-        "You are a senior customer-support specialist. Using the case context provided, "
-        "write a concise, empathetic reply to the customer with a clear resolution and next steps."
-    )
-    return llm.complete(system, context)
-
-
-def billing_agent(state: SupportState) -> dict:
-    order = lookup_order(state.get("order_id", ""))
-    kb = search_kb("subscription billing " + state["ticket"])
-    context = f"Customer ticket: {state['ticket']}\n{order}\n{kb}"
-    draft = _draft_reply(context)
-    return {"tool_results": [order, kb], "draft": draft,
-            "log": ["billing_agent -> called lookup_order + search_kb, drafted reply"]}
-
-
-def refund_agent(state: SupportState) -> dict:
-    order = lookup_order(state.get("order_id", ""))
-    policy = check_refund_policy(state.get("order_id", ""))
-    context = f"Customer ticket: {state['ticket']}\n{order}\n{policy}"
-    draft = _draft_reply(context)
-    return {"tool_results": [order, policy], "draft": draft,
-            "log": ["refund_agent -> called lookup_order + check_refund_policy, drafted reply"]}
-
-
-def technical_agent(state: SupportState) -> dict:
-    kb = search_kb(state["ticket"])
-    context = f"Customer ticket: {state['ticket']}\n{kb}"
-    draft = _draft_reply(context)
-    return {"tool_results": [kb], "draft": draft,
-            "log": ["technical_agent -> called search_kb, drafted reply"]}
-
-
-def general_agent(state: SupportState) -> dict:
-    kb = search_kb(state["ticket"])
-    context = f"Customer ticket: {state['ticket']}\n{kb}"
-    draft = _draft_reply(context)
-    return {"tool_results": [kb], "draft": draft,
-            "log": ["general_agent -> drafted general reply"]}
-
-
-# --------------------------------------------------------------------------- #
-# Refinement loop                                                             #
-# --------------------------------------------------------------------------- #
-def critic(state: SupportState) -> dict:
-    llm = get_llm()
-    system = (
-        "You are a QA critic reviewing a support reply. If it is empathetic, specific, and "
-        "actionable, reply exactly 'APPROVED'. Otherwise reply 'REVISE:' followed by one fix."
-    )
-    feedback = llm.complete(system, state.get("draft", ""))
-    return {
-        "critique": feedback,
-        "revisions": state.get("revisions", 0) + 1,
-        "log": [f"critic -> {feedback[:60]}"],
-    }
-
-
-def critic_decision(state: SupportState) -> str:
-    """Conditional edge: loop back to revise, or move on to human approval."""
-    approved = state.get("critique", "").strip().upper().startswith("APPROVED")
-    if approved or state.get("revisions", 0) >= MAX_REVISIONS:
-        return "human_approval"
-    return "revise"
-
-
-def revise(state: SupportState) -> dict:
-    """Re-draft using the critic's feedback — this is the loop body."""
-    llm = get_llm()
-    system = (
-        "You are a senior support specialist. Improve the draft using the critique. "
-        "Return only the improved reply."
-    )
-    context = f"Draft:\n{state.get('draft','')}\n\nCritique:\n{state.get('critique','')}"
-    new_draft = llm.complete(system, context)
-    return {"draft": new_draft, "log": ["revise -> re-drafted using critic feedback"]}
-
-
-# --------------------------------------------------------------------------- #
-# Human-in-the-loop + finalize                                                #
-# --------------------------------------------------------------------------- #
-def human_approval(state: SupportState) -> dict:
+def orchestrator_node(state: HotelIntelligenceState) -> dict:
     """
-    A pass-through node. The graph is compiled with `interrupt_before=['human_approval']`,
-    so execution PAUSES before this runs and returns control to the caller (a human).
-    The human approves as-is or supplies `human_edit`, then the graph is resumed.
+    Analyzes the user query to determine task type and initial setup.
     """
-    return {"log": ["human_approval -> awaiting human decision (interrupt)"]}
+    llm = get_llm()
+    query = state.get("user_query", "")
+    
+    prompt = f"""You are the Orchestrator for a Hotel Market & Acquisition Intelligence System.
+    Determine if the user is asking for:
+    1. 'acquisition' (evaluating a property to buy/acquire)
+    2. 'pricing' (analyzing market and competitors for dynamic pricing)
+    
+    User Query: {query}
+    
+    Respond with ONLY the word 'acquisition' or 'pricing'.
+    """
+    response = llm.invoke([HumanMessage(content=prompt)])
+    task_type = _get_text(response.content).strip().lower()
+    if "acquisition" not in task_type and "pricing" not in task_type:
+        task_type = "pricing"  # default
+        
+    return {"task_type": task_type}
 
+def reputation_analyst_node(state: HotelIntelligenceState) -> dict:
+    """
+    Uses the fetch_hotel_reviews tool to gather reputation data.
+    """
+    llm = get_llm().bind_tools([fetch_hotel_reviews])
+    query = state.get("user_query", "")
+    
+    sys_msg = SystemMessage(content="You are the Reputation Analyst. Use tools to fetch hotel reviews and summarize the sentiment, operational red flags, and CapEx needs.")
+    response = llm.invoke([sys_msg, HumanMessage(content=query)])
+    
+    # We will simulate tool execution here for simplicity, or we can use standard ToolNode.
+    # To keep it completely LangGraph native, we should ideally use ToolNode, 
+    # but since this is an MVP without complex tool loops, we can just call it manually or rely on a standard ReAct agent.
+    # For this script, we'll just force the tool call if needed or do a basic extraction.
+    
+    # Let's do a simple manual invocation if tool calls exist:
+    reputation_data = "No reputation data gathered."
+    if hasattr(response, "tool_calls") and response.tool_calls:
+        tool_call = response.tool_calls[0]
+        if tool_call["name"] == "fetch_hotel_reviews":
+            args = tool_call["args"]
+            reputation_data = fetch_hotel_reviews.invoke(args)
+            # Re-invoke to summarize
+            summary_resp = get_llm().invoke([
+                sys_msg, 
+                HumanMessage(content=f"Here are the reviews: {reputation_data}\nSummarize them for our intelligence report.")
+            ])
+            reputation_data = _get_text(summary_resp.content)
+    else:
+        # Fallback if it just answered
+        reputation_data = _get_text(response.content)
+        
+    return {"reputation_data": reputation_data}
 
-def finalize(state: SupportState) -> dict:
-    reply = state.get("human_edit") or state.get("draft", "")
-    source = "human-edited" if state.get("human_edit") else "agent draft (approved)"
-    return {
-        "final_reply": reply,
-        "approved": True,
-        "log": [f"finalize -> sent {source}"],
-    }
+def market_analyst_node(state: HotelIntelligenceState) -> dict:
+    """
+    Uses the search_market_data tool to gather market and competitor info.
+    """
+    llm = get_llm().bind_tools([search_market_data])
+    query = state.get("user_query", "")
+    
+    sys_msg = SystemMessage(content="You are the Market Analyst. Use your search tool to find local events, competitor pricing, and market trends.")
+    response = llm.invoke([sys_msg, HumanMessage(content=query)])
+    
+    market_data = "No market data gathered."
+    if hasattr(response, "tool_calls") and response.tool_calls:
+        tool_call = response.tool_calls[0]
+        if tool_call["name"] == "search_market_data":
+            args = tool_call["args"]
+            market_data = search_market_data.invoke(args)
+            summary_resp = get_llm().invoke([
+                sys_msg, 
+                HumanMessage(content=f"Here is the market data: {market_data}\nSummarize it for our intelligence report.")
+            ])
+            market_data = _get_text(summary_resp.content)
+    else:
+        market_data = _get_text(response.content)
+        
+    return {"market_data": market_data}
+
+def financial_evaluator_node(state: HotelIntelligenceState) -> dict:
+    """
+    Combines reputation and market data into a preliminary financial/risk report.
+    """
+    llm = get_llm()
+    task = state.get("task_type", "pricing")
+    rep = state.get("reputation_data", "")
+    mkt = state.get("market_data", "")
+    
+    sys_msg = SystemMessage(content=f"You are the Financial Evaluator. Your task is {task}. Synthesize the reputation and market data into a preliminary assessment.")
+    user_msg = HumanMessage(content=f"Reputation Data:\\n{rep}\\n\\nMarket Data:\\n{mkt}")
+    
+    response = llm.invoke([sys_msg, user_msg])
+    return {"preliminary_report": _get_text(response.content)}
+
+def synthesizer_node(state: HotelIntelligenceState) -> dict:
+    """
+    Takes the preliminary report + human feedback and produces the final dossier.
+    """
+    llm = get_llm()
+    report = state.get("preliminary_report", "")
+    feedback = state.get("human_feedback", "")
+    
+    sys_msg = SystemMessage(content="You are the Executive Synthesizer. Finalize the intelligence dossier incorporating the human feedback.")
+    user_msg = HumanMessage(content=f"Preliminary Report:\\n{report}\\n\\nHuman Feedback:\\n{feedback}\\n\\nPlease write the final, polished executive dossier.")
+    
+    response = llm.invoke([sys_msg, user_msg])
+    return {"final_dossier": _get_text(response.content)}
