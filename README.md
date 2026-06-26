@@ -91,11 +91,13 @@ python -m src.main --name "Ember & Oak" --location "Lavapiés, Madrid" \
 ## What to put in the report
 
 1. **Problem** — small cafes need strategy-driven web presence, not templates.
-2. **Framework** — frame as a *strategy → execution* AI pipeline. Connect to course content
-   on GenAI in content creation and marketing automation.
-3. **System** — the Strategist/Generator/Editor split, the LangGraph state, the photo pipeline.
+2. **Framework** — frame as a *strategy → execution → revision* AI pipeline. Connect to
+   course content on GenAI in content creation and marketing automation.
+3. **System** — the Strategist/Generator/Editor split, the LangGraph state, the token-based
+   photo pipeline.
 4. **Demo / results** — screenshot the strategy tab + the rendered page. Run it on 3-4
-   different cafes (with and without photos) to show it generalizes.
+   different cafes (with and without photos) to show it generalizes, then show a before/after
+   from one editor revision round.
 5. **Critical discussion** — where the strategy is generic vs. genuinely insightful,
    brand-safety, and why a human still validates before publishing.
 6. **Conclusion** — what this says about GenAI lowering the cost of marketing strategy for
@@ -106,3 +108,5 @@ python -m src.main --name "Ember & Oak" --location "Lavapiés, Madrid" \
 - Run it on a few real local Madrid cafes and compare the strategies it produces.
 - Tweak the Strategist prompt in `src/agents.py` to enforce a positioning framework you like.
 - Try it with and without uploaded photos on the same shop to compare results.
+- Give the editor agent a few rounds of feedback and see how well it respects "change only
+  what I asked" versus scope-creeping into the rest of the page.
