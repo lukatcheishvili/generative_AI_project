@@ -181,8 +181,13 @@ export default function Home() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const voiceBaseRef = useRef("");
 
   // Load history + sidebar preference on mount.
   useEffect(() => {
@@ -194,6 +199,13 @@ export default function Home() {
     } catch {
       /* ignore */
     }
+  }, []);
+
+  // Detect Web Speech API support (Chrome/Edge/Safari).
+  useEffect(() => {
+    const SR =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SR));
   }, []);
 
   const busy = phase === "planning" || phase === "building";
@@ -264,9 +276,51 @@ export default function Home() {
     setPreviews(picked.map((f) => URL.createObjectURL(f)));
   }
 
+  function startVoice() {
+    const SR =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    recognitionRef.current = rec;
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    rec.continuous = true;
+    voiceBaseRef.current = brief ? brief.trimEnd() + " " : "";
+    rec.onresult = (e: any) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) {
+        text += e.results[i][0].transcript;
+      }
+      setBrief(voiceBaseRef.current + text);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    try {
+      rec.start();
+      setListening(true);
+    } catch {
+      setListening(false);
+    }
+  }
+
+  function stopVoice() {
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    setListening(false);
+  }
+
+  function toggleVoice() {
+    if (listening) stopVoice();
+    else startVoice();
+  }
+
   async function submitBrief() {
     const text = brief.trim();
     if (!text) return;
+    if (listening) stopVoice();
     const id = uid();
     setCurrentId(id);
     setSubmittedBrief(text);
@@ -729,6 +783,24 @@ export default function Home() {
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                  <button
+                    className={`icon-btn ${listening ? "listening" : ""}`}
+                    title={
+                      !voiceSupported
+                        ? "Voice input isn't supported in this browser"
+                        : listening
+                          ? "Stop voice input"
+                          : "Voice input"
+                    }
+                    onClick={toggleVoice}
+                    disabled={busy || !voiceSupported}
+                    aria-label="Voice input"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="2" width="6" height="11" rx="3" />
+                      <path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8" />
                     </svg>
                   </button>
                   <div className="model-select">

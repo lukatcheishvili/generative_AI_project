@@ -752,6 +752,28 @@ textarea.field-input:focus {
   background: var(--surface-2);
 }
 
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icon-btn.listening {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  animation: pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--accent-soft);
+  }
+}
+
 .send-btn {
   width: 36px;
   height: 36px;
