@@ -334,6 +334,12 @@ button {
   background: linear-gradient(135deg, var(--accent), #a855f7);
 }
 
+.brand-logo {
+  height: 26px;
+  width: auto;
+  display: block;
+}
+
 .topbar-right {
   display: flex;
   align-items: center;
@@ -1156,4 +1162,136 @@ textarea.field-input:focus {
   border-radius: var(--radius-pill);
   padding: 4px 10px;
   margin-bottom: var(--space-3);
+}
+
+/* --------------------------------------------------------------------------- */
+/* Architecture overlay                                                        */
+/* --------------------------------------------------------------------------- */
+.arch-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6) var(--space-8) var(--space-12);
+  overflow-y: auto;
+}
+
+.arch-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.arch-head h2 {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.arch-overline {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.arch-intro {
+  max-width: 1000px;
+  margin: var(--space-3) auto var(--space-6);
+  width: 100%;
+  color: var(--ink-muted);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.arch-intro strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.arch-canvas {
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.arch-svg {
+  width: 100%;
+  height: auto;
+}
+
+.arch-svg text {
+  font-family: var(--font-sans);
+}
+
+.arch-group {
+  fill: transparent;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.arch-grouplabel-bg {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.arch-grouplabel-text {
+  fill: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.arch-box {
+  fill: var(--surface-1);
+  stroke: var(--border);
+  stroke-width: 1.2;
+}
+
+.arch-box.accent {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.arch-title {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.arch-sub {
+  fill: var(--ink-muted);
+  font-size: 11.5px;
+}
+
+.arch-edge {
+  stroke: var(--ink-muted);
+  stroke-width: 1.5;
+  fill: none;
+  opacity: 0.85;
+}
+
+.arch-edge.dashed {
+  stroke-dasharray: 5 4;
+}
+
+.arch-edge-label-bg {
+  fill: var(--bg);
+}
+
+.arch-edge-label {
+  fill: var(--ink-muted);
+  font-size: 11px;
+}
+
+.arch-marker {
+  fill: var(--ink-muted);
 }
