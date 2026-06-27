@@ -238,19 +238,6 @@ export default function Home() {
           PageForge
         </div>
         <div className="topbar-right">
-          <div className="model-select">
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              aria-label="Model"
-            >
-              {MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
           <ThemeToggle />
         </div>
       </header>
@@ -517,17 +504,6 @@ export default function Home() {
               hidden
               onChange={onPickFiles}
             />
-            <button
-              className="icon-btn"
-              title="Attach photos"
-              onClick={() => fileInput.current?.click()}
-              disabled={busy}
-              aria-label="Attach photos"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </button>
             <textarea
               ref={textareaRef}
               rows={1}
@@ -541,16 +517,44 @@ export default function Home() {
               onChange={(e) => setBrief(e.target.value)}
               onKeyDown={onComposerKeyDown}
             />
-            <button
-              className="send-btn"
-              onClick={submitBrief}
-              disabled={!canSubmit}
-              aria-label="Send"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 19V5M5 12l7-7 7 7" />
-              </svg>
-            </button>
+            <div className="composer-controls">
+              <div className="composer-controls-left">
+                <button
+                  className="icon-btn"
+                  title="Attach photos"
+                  onClick={() => fileInput.current?.click()}
+                  disabled={busy}
+                  aria-label="Attach photos"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+                <div className="model-select">
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    aria-label="Model"
+                  >
+                    {MODELS.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button
+                className="send-btn"
+                onClick={submitBrief}
+                disabled={!canSubmit}
+                aria-label="Send"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div className="composer-hint">
             {phase === "plan"

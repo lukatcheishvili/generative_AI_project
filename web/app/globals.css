@@ -517,9 +517,9 @@ textarea.field-input:focus {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-2);
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
   gap: var(--space-2);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -530,7 +530,7 @@ textarea.field-input:focus {
 }
 
 .composer textarea {
-  flex: 1;
+  width: 100%;
   border: none;
   outline: none;
   resize: none;
@@ -540,7 +540,21 @@ textarea.field-input:focus {
   font-size: 15px;
   line-height: 1.5;
   max-height: 200px;
-  padding: 6px 0;
+  padding: 6px 2px;
+}
+
+/* Second row inside the composer: attach + model on the left, send on the right */
+.composer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.composer-controls-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .composer textarea::placeholder {

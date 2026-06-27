@@ -143,8 +143,8 @@ edge instead.
   (primary) and **Edit brief** (secondary).
 - **Inputs** use `--surface-2` bg (or transparent inside cards), `--border`
   hairline, `--radius-md`, and an `--accent` focus ring.
-- **Model dropdown** sits in the top bar; selected model drives the backend
-  per-request.
+- **Model dropdown** sits inside the composer (bottom input bar, ChatGPT/Gemini
+  style); the selected model drives the backend per-request.
 
 ---
 
