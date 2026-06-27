@@ -53,6 +53,7 @@ const MAX_PHOTOS = 5;
 const STORAGE_KEY = "pageforge.conversations";
 const SIDEBAR_KEY = "pageforge.sidebar";
 const SETTINGS_KEY = "pageforge.settings";
+const ARCH_KEY = "pageforge.arch";
 
 interface Settings {
   source: "default" | "gemini" | "vertex";
@@ -268,6 +269,8 @@ export default function Home() {
       if (sb !== null) setSidebarOpen(sb === "1");
       const st = localStorage.getItem(SETTINGS_KEY);
       if (st) setSettings({ ...DEFAULT_SETTINGS, ...(JSON.parse(st) as Partial<Settings>) });
+      // Restore the last view (e.g. the Architecture page) after a refresh.
+      if (localStorage.getItem(ARCH_KEY) === "1") setArchOpen(true);
     } catch {
       /* ignore */
     }
@@ -281,6 +284,15 @@ export default function Home() {
       /* ignore */
     }
   }, [settings]);
+
+  // Remember whether the Architecture view is open, so a refresh stays on it.
+  useEffect(() => {
+    try {
+      localStorage.setItem(ARCH_KEY, archOpen ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [archOpen]);
 
   // Detect Web Speech API support (Chrome/Edge/Safari).
   useEffect(() => {

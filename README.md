@@ -1,6 +1,6 @@
 # PageForge — AI Marketing Strategy → Landing Page
 
-> 🔗 **Live demo:** https://generative-ai-project-puce.vercel.app/
+> **Live demo:** https://generative-ai-project-puce.vercel.app/
 
 Final project for the **Generative AI** course at **IE University** — a fully functional MVP
 that solves a real business problem with an **agentic** GenAI architecture and a polished,
@@ -21,6 +21,7 @@ approved plan — plus any photos you upload — into a complete, downloadable H
 - **Luka Tcheishvili**
 - **Juan José Rincón Briceño**
 - **Nicklas Urban**
+- **Michael Alexis Concepcion**
 
 ---
 
@@ -83,7 +84,7 @@ The app lives in the **`web/`** folder.
 ```bash
 cd web
 npm install
-cp .env.example .env.local        # then edit .env.local (see below)
+# create a file named  web/.env.local  with the variables shown below
 npm run dev                       # http://localhost:3000
 ```
 

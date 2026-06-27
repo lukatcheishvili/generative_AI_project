@@ -36,7 +36,7 @@ Requires **Node.js 20+**.
 ```bash
 cd web
 npm install
-cp .env.example .env.local      # then edit .env.local (see below)
+# create a file named  web/.env.local  with the variables shown below
 npm run dev                     # http://localhost:3000
 ```
 

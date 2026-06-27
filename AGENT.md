@@ -11,10 +11,10 @@ bottom) so you know exactly where to continue.
 
 - **Name:** PageForge — a strategy-first, two-agent landing-page generator.
 - **Course:** Generative AI — final project, **IE University** (functional MVP + live demo).
-- **Team:** Ricardo Liévano Pedroza · Cecile Tambey · Luka Tcheishvili · Juan José Rincón Briceño · Nicklas Urban.
+- **Team:** Ricardo Liévano Pedroza · Cecile Tambey · Luka Tcheishvili · Juan José Rincón Briceño · Nicklas Urban · Michael Alexis Concepcion.
 - **Live demo:** https://generative-ai-project-puce.vercel.app/
 - **Repo:** https://github.com/lukatcheishvili/generative_AI_project
-- **Status:** ✅ **Deployed and working end-to-end** on Vercel + Google Vertex AI. The active
+- **Status:** **Deployed and working end-to-end** on Vercel + Google Vertex AI. The active
   product is the Next.js app in **`web/`**. (An older Python/Streamlit prototype remains in
   `src/` / `frontend/` for reference only.)
 
@@ -62,7 +62,7 @@ The frontend design-system rules are in **[`web/AGENT.md`](web/AGENT.md)**.
 
 | Thing | Value |
 |---|---|
-| **Run locally** | `cd web && npm install && cp .env.example .env.local && npm run dev` |
+| **Run locally** | `cd web && npm install && npm run dev` — create `web/.env.local` first (vars below) |
 | **Quality gate** | `cd web && npm run build` (type-checks the whole app — must pass) |
 | **Deploy** | Auto on push to `main` via Vercel; **Vercel Root Directory = `web`** |
 | **Production branch** | `main` |
@@ -91,8 +91,8 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
 1. **Humans author commits.** Never list an AI as a commit/PR author or co-author.
 2. **Clarify before building** on ambiguous, high-impact decisions.
 3. **Conventional Commits:** `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `chore:`.
-4. **Secrets never go in git.** `.env*` is gitignored. Add new config to `.env.example` with a
-   placeholder. If a secret is ever exposed, **rotate it**.
+4. **Secrets never go in git.** `.env*` is gitignored. Document any new config in the env-var
+   table above (§4) and in `web/README.md`. If a secret is ever exposed, **rotate it**.
 5. **All model calls go through the provider seam** (`web/lib/llm.ts → callModel`) and happen
    **only server-side** (the API routes). Keys never reach the browser.
 6. **`npm run build` must pass** before merging. Don't mark work done on a red build.
@@ -104,7 +104,7 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
       problem, value, the two-agent architecture, live demo, results. Use `README.md` +
       `docs/CODE_GUIDE.md` as source.
 - [ ] **Rehearse the 15-minute live demo** — all 5 members must speak; finish within the limit.
-- [ ] ⚠️ **SECURITY — rotate exposed secrets.** During setup, a **GitHub personal access token**
+- [ ] **SECURITY — rotate exposed secrets.** During setup, a **GitHub personal access token**
       and the **Vertex service-account key** were pasted into chat → treat both as compromised.
       Revoke/rotate them: GitHub → Settings → Developer settings → Tokens; Google Cloud → IAM →
       Service Accounts → `generative-ai-vertex-user` → Keys (delete + create new, update
@@ -121,7 +121,7 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
 
 ---
 
-# 📜 PROJECT LOG (newest first)
+# PROJECT LOG (newest first)
 
 A running record of everything done, so anyone (or an LLM) can see the history and continue.
 All dates 2026-06-27 unless noted.
