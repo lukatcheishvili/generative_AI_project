@@ -1,5 +1,7 @@
 # BrewPage — AI Marketing Strategy → Landing Page Engine
 
+> 🔗 **Live demo:** https://generative-ai-project-puce.vercel.app/
+
 Individual project for **Big Data & AI in Marketing**.
 Topic: *Generative AI in content creation / AI-powered marketing workflows.*
 
