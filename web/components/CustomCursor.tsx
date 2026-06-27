@@ -80,7 +80,6 @@ export default function CustomCursor() {
           strokeLinecap="round"
         />
       </svg>
-      <span className="custom-cursor-label">You</span>
     </div>
   );
 }
