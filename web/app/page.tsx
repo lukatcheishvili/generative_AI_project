@@ -537,7 +537,7 @@ export default function Home() {
                   : "Describe your business and what you want…"
               }
               value={brief}
-              disabled={busy || phase === "plan" || phase === "building"}
+              disabled={busy || phase === "plan"}
               onChange={(e) => setBrief(e.target.value)}
               onKeyDown={onComposerKeyDown}
             />
