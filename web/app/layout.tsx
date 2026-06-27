@@ -2,10 +2,23 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PageForge — AI landing pages for small businesses",
+  title: "PageForge — AI landing pages",
   description:
-    "Makes the marketing decisions a strategist would — positioning, audience, value proposition — then renders them into a real landing page.",
+    "Describe your business; the agent plans the marketing strategy, you approve it, and it builds a real landing page.",
 };
+
+// Set the theme before first paint to avoid a flash of the wrong theme.
+const themeScript = `
+(function () {
+  try {
+    var stored = localStorage.getItem('theme');
+    var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = stored || system;
+  } catch (e) {
+    document.documentElement.dataset.theme = 'light';
+  }
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -13,8 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {children}
+      </body>
     </html>
   );
 }

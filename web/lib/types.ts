@@ -1,38 +1,15 @@
-// Shared types for the strategy -> landing-page pipeline.
+// Shared types for the brief -> plan -> landing-page flow.
 
-export const BUSINESS_TYPES = [
-  "Café / Coffee shop",
-  "Restaurant / Bar",
-  "Gym / Fitness studio",
-  "Salon / Spa / Barber",
-  "Retail / Boutique",
-  "Professional services / Agency",
-  "Clinic / Health practice",
-  "Hotel / B&B",
-  "Other / Custom",
-] as const;
-
-export const BUSINESS_GOALS = [
-  "Get people to visit in person",
-  "Drive online orders / bookings",
-  "Generate leads / enquiries",
-  "Sign up / subscribe",
-  "Book a consultation / appointment",
-] as const;
-
-export type BusinessGoal = (typeof BUSINESS_GOALS)[number];
-
+/** Business basics the Strategist extracts from the user's free-form brief. */
 export interface Shop {
-  businessType: string;
   name: string;
+  businessType: string;
   location: string;
   address?: string;
-  differentiator: string;
-  vibe: string;
-  target: string;
   goal: string;
 }
 
+/** The marketing decisions the Strategist makes. */
 export interface Strategy {
   positioning: string;
   target_customer: string;
@@ -42,13 +19,34 @@ export interface Strategy {
   key_messages: string[];
 }
 
-export interface PipelineResult {
+/** What Plan Mode shows the user to approve before anything is generated. */
+export interface Plan {
+  business: Shop;
   strategy: Strategy;
-  html: string;
 }
 
-// Human-readable progress labels, streamed to the UI as each node finishes.
-export const STEP_LABELS: Record<string, string> = {
-  strategist: "1/2 — Strategist is making the marketing decisions",
-  generator: "2/2 — Generator is building the landing page",
-};
+export const BUSINESS_GOALS = [
+  "Get people to visit in person",
+  "Drive online orders / bookings",
+  "Generate leads / enquiries",
+  "Sign up / subscribe",
+  "Book a consultation / appointment",
+] as const;
+
+export interface ModelOption {
+  id: string;
+  label: string;
+}
+
+/** Google/Vertex models offered in the picker (web/AGENT.md §6). */
+export const MODELS: ModelOption[] = [
+  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+];
+
+/** Default selected model — the latest Flash. */
+export const DEFAULT_MODEL = "gemini-2.5-flash";
+
+export const PLAN_STEP = "Strategist is analysing your business and planning the strategy…";
+export const BUILD_STEP = "Generator is building your landing page…";

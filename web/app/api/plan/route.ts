@@ -1,37 +1,36 @@
 /**
- * POST /api/generate  — Plan Mode, step 2.
+ * POST /api/plan  — Plan Mode, step 1.
  *
- * Takes the APPROVED plan (possibly edited by the user) plus any photos and
- * runs the Generator, streaming back the finished landing-page HTML.
+ * Runs the Strategist on the user's free-form brief and streams back a Plan
+ * (extracted business basics + marketing strategy) for the human to approve.
+ * Nothing is generated yet.
  *
- * Body: { plan: Plan, images?: string[], model?: string }
+ * Body: { brief: string, model?: string }
  * SSE events:
  *   progress  { label }
- *   done      { html }
+ *   done      { plan }
  *   error     { message }
  */
 
-import { runGenerator } from "@/lib/agents";
-import { BUILD_STEP, type Plan } from "@/lib/types";
+import { runStrategist } from "@/lib/agents";
+import { PLAN_STEP } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  let body: { plan?: unknown; images?: unknown; model?: unknown };
+  let body: { brief?: unknown; model?: unknown };
   try {
     body = await req.json();
   } catch {
     return new Response("Invalid JSON body", { status: 400 });
   }
 
-  const plan = body.plan as Plan | undefined;
-  const images = Array.isArray(body.images) ? (body.images as string[]) : [];
+  const brief = typeof body.brief === "string" ? body.brief.trim() : "";
   const model = typeof body.model === "string" ? body.model : undefined;
-
-  if (!plan || !plan.business || !plan.strategy) {
-    return new Response("Missing or malformed field: plan", { status: 400 });
+  if (!brief) {
+    return new Response("Missing required field: brief", { status: 400 });
   }
 
   const encoder = new TextEncoder();
@@ -42,12 +41,12 @@ export async function POST(req: Request) {
           encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
         );
       try {
-        send("progress", { label: BUILD_STEP });
-        const html = await runGenerator(plan, images, model);
-        send("done", { html });
+        send("progress", { label: PLAN_STEP });
+        const plan = await runStrategist(brief, model);
+        send("done", { plan });
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Generation failed unexpectedly.";
+          err instanceof Error ? err.message : "Planning failed unexpectedly.";
         send("error", { message });
       } finally {
         controller.close();

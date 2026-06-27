@@ -1,40 +1,36 @@
 /**
- * The pipeline, expressed as a LangGraph.js graph.
+ * The pipeline as a LangGraph.js graph: strategist -> generator.
  *
- * Two nodes, run in a straight line:
- *   strategist -> generator
- *
- * Splitting strategy from execution is the whole point: a single "write me a
- * landing page" prompt collapses both and defaults to generic copy. Forcing the
- * strategic decisions to happen first, in their own node, is what makes this a
- * justified multi-agent graph rather than one big prompt.
- *
- * The compiled graph is streamed node-by-node (streamMode "updates") so the UI
- * can report live per-step progress.
+ * In the web app the two agents are invoked as SEPARATE requests (/api/plan
+ * then /api/build) so a human can approve the plan in between — the
+ * "interrupt before you act" gate from the original design. This graph is the
+ * canonical, non-interactive view of the same pipeline (used for tests / a
+ * future one-shot path) and keeps the multi-agent structure documented in code.
  */
 
 import { StateGraph, START, END, Annotation } from "@langchain/langgraph";
 
 import { runStrategist, runGenerator } from "./agents";
-import type { Shop, Strategy } from "./types";
+import type { Plan } from "./types";
 
 export const PipelineState = Annotation.Root({
-  shop: Annotation<Shop>(),
+  brief: Annotation<string>(),
+  model: Annotation<string | undefined>(),
   images: Annotation<string[]>({
     reducer: (_prev, next) => next,
     default: () => [],
   }),
-  strategy: Annotation<Strategy | undefined>(),
+  plan: Annotation<Plan | undefined>(),
   html: Annotation<string | undefined>(),
 });
 
 async function strategistNode(state: typeof PipelineState.State) {
-  const strategy = await runStrategist(state.shop);
-  return { strategy };
+  const plan = await runStrategist(state.brief, state.model);
+  return { plan };
 }
 
 async function generatorNode(state: typeof PipelineState.State) {
-  const html = await runGenerator(state.shop, state.strategy!, state.images || []);
+  const html = await runGenerator(state.plan!, state.images || [], state.model);
   return { html };
 }
 

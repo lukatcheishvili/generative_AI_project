@@ -7,6 +7,10 @@ to do next without re-discovering context.
 
 > Project: **Support-Triage Multi-Agent System** (LangGraph). See `README.md` for the product
 > overview and `docs/architecture.md` for the technical deep dive.
+>
+> **Frontend (PageForge web app):** the active product is now the Next.js app in
+> `web/`. Its design system, UI guidelines, and architecture live in
+> **[`web/AGENT.md`](web/AGENT.md)** — read that before touching anything under `web/`.
 
 ---
 

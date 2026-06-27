@@ -20,23 +20,32 @@ export function activeProvider(): "gemini" | "vertex" {
     : "gemini";
 }
 
-export async function callModel(prompt: string, temperature = 0.7): Promise<string> {
+export async function callModel(
+  prompt: string,
+  temperature = 0.7,
+  model?: string,
+): Promise<string> {
+  const modelName = model || MODEL_NAME;
   return activeProvider() === "vertex"
-    ? callVertex(prompt, temperature)
-    : callGemini(prompt, temperature);
+    ? callVertex(prompt, temperature, modelName)
+    : callGemini(prompt, temperature, modelName);
 }
 
 // --------------------------------------------------------------------------- //
 // Gemini Developer API                                                        //
 // --------------------------------------------------------------------------- //
-async function callGemini(prompt: string, temperature: number): Promise<string> {
+async function callGemini(
+  prompt: string,
+  temperature: number,
+  modelName: string,
+): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not set (required when LLM_PROVIDER=gemini).");
   }
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: MODEL_NAME,
+    model: modelName,
     generationConfig: { temperature },
   });
   const result = await model.generateContent(prompt);
@@ -46,7 +55,11 @@ async function callGemini(prompt: string, temperature: number): Promise<string> 
 // --------------------------------------------------------------------------- //
 // Vertex AI                                                                   //
 // --------------------------------------------------------------------------- //
-async function callVertex(prompt: string, temperature: number): Promise<string> {
+async function callVertex(
+  prompt: string,
+  temperature: number,
+  modelName: string,
+): Promise<string> {
   const project = process.env.GOOGLE_CLOUD_PROJECT;
   const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
   if (!project) {
@@ -63,7 +76,7 @@ async function callVertex(prompt: string, temperature: number): Promise<string> 
   });
 
   const model = vertex.getGenerativeModel({
-    model: MODEL_NAME,
+    model: modelName,
     generationConfig: { temperature },
   });
   const result = await model.generateContent({
