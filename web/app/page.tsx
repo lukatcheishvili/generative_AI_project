@@ -184,6 +184,7 @@ export default function Home() {
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -216,6 +217,13 @@ export default function Home() {
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [files]);
 
+  // Track fullscreen so the rail button can swap its icon.
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
   const busy = phase === "planning" || phase === "building";
   const canSubmit = brief.trim().length > 0 && (phase === "idle" || phase === "done");
   const enoughPhotos = files.length >= 3;
@@ -243,6 +251,14 @@ export default function Home() {
       }
       return n;
     });
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
   }
 
   function newChat() {
@@ -443,6 +459,37 @@ export default function Home() {
 
   return (
     <div className="shell">
+      {/* Left rail — sidebar toggle + full screen */}
+      <nav className="rail">
+        <button
+          className="rail-btn"
+          onClick={toggleSidebar}
+          title="Toggle sidebar"
+          aria-label="Toggle sidebar"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M9 4v16" />
+          </svg>
+        </button>
+        <button
+          className="rail-btn"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit full screen" : "Full screen"}
+          aria-label="Toggle full screen"
+        >
+          {isFullscreen ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" />
+            </svg>
+          )}
+        </button>
+      </nav>
+
       {/* Sidebar — conversation history */}
       <aside className={`sidebar ${sidebarOpen ? "" : "collapsed"}`}>
         <div className="sidebar-inner">
@@ -487,16 +534,6 @@ export default function Home() {
       <div className="app">
         <header className="topbar">
           <div className="brand">
-            <button
-              className="sidebar-toggle"
-              onClick={toggleSidebar}
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
             <span className="brand-dot" />
             PageForge
           </div>
