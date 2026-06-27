@@ -871,12 +871,7 @@ export default function Home() {
       {/* Main column */}
       <div className="app">
         <header className="topbar">
-          <button
-            className="brand"
-            onClick={newChat}
-            title="New chat"
-            aria-label="PageForge — start a new chat"
-          >
+          <div className="brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/ie-logo.png"
@@ -886,8 +881,15 @@ export default function Home() {
                 e.currentTarget.style.display = "none";
               }}
             />
-            PageForge
-          </button>
+            <button
+              className="brand-name"
+              onClick={newChat}
+              title="New chat"
+              aria-label="PageForge — start a new chat"
+            >
+              PageForge
+            </button>
+          </div>
           <div className="topbar-right">
             <ThemeToggle />
           </div>
