@@ -185,11 +185,15 @@ export default function Home() {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const voiceBaseRef = useRef("");
+  const modelRef = useRef<HTMLDivElement>(null);
 
   // Load history + sidebar preference on mount.
   useEffect(() => {
@@ -222,6 +226,17 @@ export default function Home() {
     const onFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  // Close the model dropdown when clicking outside it.
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (modelRef.current && !modelRef.current.contains(e.target as Node)) {
+        setModelMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
   const busy = phase === "planning" || phase === "building";
@@ -291,6 +306,29 @@ export default function Home() {
     e.stopPropagation();
     setConversations((prev) => safeStore(prev.filter((c) => c.id !== id)));
     if (currentId === id) newChat();
+  }
+
+  function startRename(c: Conversation, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditingId(c.id);
+    setEditingTitle(c.title);
+  }
+
+  function commitRename() {
+    const id = editingId;
+    if (id) {
+      const newTitle = editingTitle.trim();
+      setConversations((prev) =>
+        safeStore(prev.map((c) => (c.id === id ? { ...c, title: newTitle || c.title } : c))),
+      );
+    }
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
+  function cancelRename() {
+    setEditingId(null);
+    setEditingTitle("");
   }
 
   function addFiles(incoming: File[]) {
@@ -509,20 +547,51 @@ export default function Home() {
                 <div
                   key={c.id}
                   className={`conv-item ${c.id === currentId ? "active" : ""}`}
-                  onClick={() => loadConversation(c)}
+                  onClick={() => {
+                    if (editingId !== c.id) loadConversation(c);
+                  }}
                   title={c.brief}
                 >
-                  <span className="conv-title">{c.title}</span>
-                  <button
-                    className="conv-del"
-                    onClick={(e) => deleteConversation(c.id, e)}
-                    aria-label="Delete conversation"
-                    title="Delete"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-                    </svg>
-                  </button>
+                  {editingId === c.id ? (
+                    <input
+                      className="conv-rename"
+                      value={editingTitle}
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitRename();
+                        else if (e.key === "Escape") cancelRename();
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="conv-title">{c.title}</span>
+                      <div className="conv-actions">
+                        <button
+                          className="conv-act"
+                          onClick={(e) => startRename(c, e)}
+                          aria-label="Rename conversation"
+                          title="Rename"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                          </svg>
+                        </button>
+                        <button
+                          className="conv-act danger"
+                          onClick={(e) => deleteConversation(c.id, e)}
+                          aria-label="Delete conversation"
+                          title="Delete"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))
             )}
@@ -533,10 +602,15 @@ export default function Home() {
       {/* Main column */}
       <div className="app">
         <header className="topbar">
-          <div className="brand">
+          <button
+            className="brand"
+            onClick={newChat}
+            title="New chat"
+            aria-label="PageForge — start a new chat"
+          >
             <span className="brand-dot" />
             PageForge
-          </div>
+          </button>
           <div className="topbar-right">
             <ThemeToggle />
           </div>
@@ -915,18 +989,53 @@ export default function Home() {
                       <path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8" />
                     </svg>
                   </button>
-                  <div className="model-select">
-                    <select
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      aria-label="Model"
+                  <div className="model-dd" ref={modelRef}>
+                    <button
+                      type="button"
+                      className="model-dd-trigger"
+                      onClick={() => setModelMenuOpen((o) => !o)}
+                      aria-haspopup="listbox"
+                      aria-expanded={modelMenuOpen}
                     >
-                      {MODELS.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
+                      {MODELS.find((m) => m.id === model)?.label ?? model}
+                      <svg
+                        className={`model-chevron ${modelMenuOpen ? "open" : ""}`}
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </button>
+                    {modelMenuOpen && (
+                      <div className="model-menu" role="listbox">
+                        {MODELS.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            role="option"
+                            aria-selected={m.id === model}
+                            className={`model-option ${m.id === model ? "selected" : ""}`}
+                            onClick={() => {
+                              setModel(m.id);
+                              setModelMenuOpen(false);
+                            }}
+                          >
+                            {m.label}
+                            {m.id === model && (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button
