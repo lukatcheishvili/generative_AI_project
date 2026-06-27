@@ -340,6 +340,7 @@ export default function Home() {
     setSteps([]);
     setError(null);
     setFiles([]);
+    setArchOpen(false);
     setPhase("idle");
   }
 
@@ -707,40 +708,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Architecture full-screen overlay */}
-      {archOpen && (
-        <div className="arch-overlay">
-          <div className="arch-head">
-            <div>
-              <div className="arch-overline">Architecture</div>
-              <h2>How PageForge works</h2>
-            </div>
-            <button
-              className="icon-btn"
-              onClick={() => setArchOpen(false)}
-              aria-label="Close architecture"
-              title="Close"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <p className="arch-intro">
-            PageForge is a <strong>two-agent pipeline</strong>. You describe a business; a{" "}
-            <strong>Strategist</strong> agent turns it into a marketing plan — positioning,
-            audience, value proposition, key messages — which you review and approve. Then a{" "}
-            <strong>Generator</strong> agent builds a self-contained landing page from the
-            approved plan plus your photos. It runs as serverless routes on Vercel and calls
-            Google <strong>Gemini 2.5 Flash</strong> through a provider seam (Gemini API or
-            Vertex AI), so anyone can plug in their own credentials from Settings.
-          </p>
-          <div className="arch-canvas">
-            <ArchitectureDiagram />
-          </div>
-        </div>
-      )}
-
       {/* Left rail — sidebar toggle + full screen */}
       <nav className="rail">
         <button
@@ -771,19 +738,8 @@ export default function Home() {
           )}
         </button>
         <button
-          className="rail-btn"
-          onClick={() => setSettingsOpen(true)}
-          title="Settings"
-          aria-label="Settings"
-        >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H1a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 2.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H7a1.65 1.65 0 0 0 1-1.51V1a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V7c.36.62 1 1 1.71 1H23a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </button>
-        <button
-          className="rail-btn"
-          onClick={() => setArchOpen(true)}
+          className={`rail-btn ${archOpen ? "active" : ""}`}
+          onClick={() => setArchOpen((v) => !v)}
           title="Architecture"
           aria-label="Architecture"
         >
@@ -793,6 +749,17 @@ export default function Home() {
             <rect x="14" y="14" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
             <path d="M10 6.5h4M6.5 10v4M17.5 10v4M10 17.5h4" />
+          </svg>
+        </button>
+        <button
+          className="rail-btn"
+          onClick={() => setSettingsOpen(true)}
+          title="Settings"
+          aria-label="Settings"
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H1a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 2.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H7a1.65 1.65 0 0 0 1-1.51V1a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V7c.36.62 1 1 1.71 1H23a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
         </button>
       </nav>
@@ -896,6 +863,31 @@ export default function Home() {
         </header>
 
         <main className="canvas">
+          {archOpen ? (
+            <div className="arch-view">
+              <div className="arch-head">
+                <div>
+                  <div className="arch-overline">Architecture</div>
+                  <h2>How PageForge works</h2>
+                </div>
+                <button className="btn btn-secondary" onClick={() => setArchOpen(false)}>
+                  Back to chat
+                </button>
+              </div>
+              <p className="arch-intro">
+                PageForge is a <strong>two-agent pipeline</strong>. You describe a business; a{" "}
+                <strong>Strategist</strong> agent turns it into a marketing plan — positioning,
+                audience, value proposition, key messages — which you review and approve. Then a{" "}
+                <strong>Generator</strong> agent builds a self-contained landing page from the
+                approved plan plus your photos. It runs as serverless routes on Vercel and calls
+                Google <strong>Gemini 2.5 Flash</strong> through a provider seam (Gemini API or
+                Vertex AI), so anyone can plug in their own credentials from Settings.
+              </p>
+              <div className="arch-canvas">
+                <ArchitectureDiagram />
+              </div>
+            </div>
+          ) : (
           <div className="canvas-inner">
             {showGreeting && (
               <div className="greeting">
@@ -1202,9 +1194,11 @@ export default function Home() {
               </div>
             )}
           </div>
+          )}
         </main>
 
         {/* Composer */}
+        {!archOpen && (
         <div className="composer-wrap">
           <div style={{ width: "100%", maxWidth: 760 }}>
             {previews.length > 0 && phase === "idle" && (
@@ -1336,6 +1330,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
