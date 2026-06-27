@@ -1278,6 +1278,46 @@ textarea.field-input:focus {
   overflow: hidden;
 }
 
+/* Hover popover inside the architecture diagram */
+.arch-tip {
+  background: #ffffff;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  padding: 12px 14px;
+  font-family: var(--font-sans);
+}
+
+.arch-tip-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.arch-tip-row {
+  margin-bottom: 7px;
+}
+
+.arch-tip-row:last-child {
+  margin-bottom: 0;
+}
+
+.arch-tip-row span {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #98a2b3;
+}
+
+.arch-tip-row p {
+  margin: 1px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #1d2433;
+}
+
 .arch-svg {
   width: 100%;
   height: auto;
