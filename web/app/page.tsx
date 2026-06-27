@@ -865,24 +865,11 @@ export default function Home() {
         <main className="canvas">
           {archOpen ? (
             <div className="arch-view">
-              <div className="arch-head">
-                <div>
-                  <div className="arch-overline">Architecture</div>
-                  <h2>How PageForge works</h2>
-                </div>
+              <div className="arch-toolbar">
                 <button className="btn btn-secondary" onClick={() => setArchOpen(false)}>
-                  Back to chat
+                  ← Back to chat
                 </button>
               </div>
-              <p className="arch-intro">
-                PageForge is a <strong>two-agent pipeline</strong>. You describe a business; a{" "}
-                <strong>Strategist</strong> agent turns it into a marketing plan — positioning,
-                audience, value proposition, key messages — which you review and approve. Then a{" "}
-                <strong>Generator</strong> agent builds a self-contained landing page from the
-                approved plan plus your photos. It runs as serverless routes on Vercel and calls
-                Google <strong>Gemini 2.5 Flash</strong> through a provider seam (Gemini API or
-                Vertex AI), so anyone can plug in their own credentials from Settings.
-              </p>
               <div className="arch-canvas">
                 <ArchitectureDiagram />
               </div>
