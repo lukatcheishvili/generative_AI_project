@@ -96,16 +96,29 @@ async function callVertex(
  * into a Vercel env var). Returns undefined to fall back to ADC.
  */
 function serviceAccountCredentials(): Record<string, unknown> | undefined {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
   if (!raw) return undefined;
+
+  // Tolerate a value that was pasted wrapped in quotes.
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    raw = raw.slice(1, -1).trim();
+  }
+
+  // Raw JSON starts with "{"; otherwise treat it as base64 and strip any
+  // whitespace/newlines a dashboard may have inserted into the long string.
   const jsonStr = raw.startsWith("{")
     ? raw
-    : Buffer.from(raw, "base64").toString("utf8");
+    : Buffer.from(raw.replace(/\s+/g, ""), "base64").toString("utf8");
+
   try {
     return JSON.parse(jsonStr);
   } catch {
     throw new Error(
-      "GOOGLE_SERVICE_ACCOUNT_JSON is set but is neither valid JSON nor base64-encoded JSON.",
+      "GOOGLE_SERVICE_ACCOUNT_JSON is set but did not decode to valid JSON. " +
+        "Re-copy the full base64 string and paste it without truncation.",
     );
   }
 }
