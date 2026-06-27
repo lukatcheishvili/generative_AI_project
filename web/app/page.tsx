@@ -183,6 +183,7 @@ export default function Home() {
 
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -208,8 +209,16 @@ export default function Home() {
     setVoiceSupported(Boolean(SR));
   }, []);
 
+  // Keep photo previews in sync with the selected files (and revoke old URLs).
+  useEffect(() => {
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [files]);
+
   const busy = phase === "planning" || phase === "building";
   const canSubmit = brief.trim().length > 0 && (phase === "idle" || phase === "done");
+  const enoughPhotos = files.length >= 3;
 
   function updateBusiness<K extends keyof Shop>(key: K, value: Shop[K]) {
     setPlan((p) => (p ? { ...p, business: { ...p.business, [key]: value } } : p));
@@ -245,7 +254,6 @@ export default function Home() {
     setSteps([]);
     setError(null);
     setFiles([]);
-    setPreviews([]);
     setPhase("idle");
   }
 
@@ -259,7 +267,6 @@ export default function Home() {
     setSteps([]);
     setError(null);
     setFiles([]);
-    setPreviews([]);
     setResultTab("page");
     setPhase(c.html ? "done" : c.plan ? "plan" : "idle");
   }
@@ -270,10 +277,25 @@ export default function Home() {
     if (currentId === id) newChat();
   }
 
+  function addFiles(incoming: File[]) {
+    const imgs = incoming.filter((f) => f.type.startsWith("image/"));
+    if (imgs.length === 0) return;
+    setFiles((prev) => [...prev, ...imgs].slice(0, MAX_PHOTOS));
+  }
+
   function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS);
-    setFiles(picked);
-    setPreviews(picked.map((f) => URL.createObjectURL(f)));
+    addFiles(Array.from(e.target.files ?? []));
+    e.target.value = ""; // allow re-picking the same file
+  }
+
+  function onDropFiles(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    addFiles(Array.from(e.dataTransfer.files ?? []));
+  }
+
+  function removePhoto(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   function startVoice() {
@@ -623,17 +645,70 @@ export default function Home() {
                       }
                     />
                   </div>
+                  <div className="field full">
+                    <label>
+                      Photos — used as the real images on your page (add at least 3)
+                    </label>
+                    <div
+                      className={`dropzone ${dragOver ? "drag" : ""}`}
+                      onClick={() => fileInput.current?.click()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOver(true);
+                      }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={onDropFiles}
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12" />
+                      </svg>
+                      <span>
+                        Click to upload or drag &amp; drop — JPG/PNG/WebP, up to {MAX_PHOTOS}
+                      </span>
+                    </div>
+                    {previews.length > 0 && (
+                      <div className="thumbs">
+                        {previews.map((src, i) => (
+                          <div className="thumb" key={i}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={`photo ${i + 1}`} />
+                            <button
+                              className="thumb-del"
+                              onClick={() => removePhoto(i)}
+                              disabled={phase === "building"}
+                              aria-label="Remove photo"
+                              title="Remove"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {phase === "plan" && (
-                  <div className="actions">
-                    <button className="btn btn-primary" onClick={confirmBuild}>
-                      Confirm &amp; build page
-                    </button>
-                    <button className="btn btn-secondary" onClick={editBrief}>
-                      Edit brief
-                    </button>
-                  </div>
+                  <>
+                    {!enoughPhotos && (
+                      <div className="banner banner-info">
+                        Please add at least 3 photos above — I&apos;ll place them as the
+                        real images on your page. You&apos;ve added {files.length}.
+                      </div>
+                    )}
+                    <div className="actions">
+                      <button
+                        className="btn btn-primary"
+                        onClick={confirmBuild}
+                        disabled={!enoughPhotos}
+                      >
+                        Confirm &amp; build page
+                      </button>
+                      <button className="btn btn-secondary" onClick={editBrief}>
+                        Edit brief
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -742,7 +817,7 @@ export default function Home() {
         {/* Composer */}
         <div className="composer-wrap">
           <div style={{ width: "100%", maxWidth: 760 }}>
-            {previews.length > 0 && (
+            {previews.length > 0 && phase === "idle" && (
               <div className="thumbs">
                 {previews.map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
