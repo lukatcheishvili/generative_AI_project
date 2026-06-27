@@ -1,5 +1,29 @@
 "use client";
 
+/**
+ * page.tsx — the whole PageForge UI and the client-side flow.
+ * (See docs/CODE_GUIDE.md for a friendly, detailed walkthrough.)
+ *
+ * HOW IT WORKS, IN SHORT
+ * ----------------------
+ * The app is a small "state machine" driven by `phase`:
+ *
+ *   idle      → waiting for you to type a business brief
+ *   planning  → the Strategist agent is running (/api/plan), progress is streamed
+ *   plan      → the editable plan card is shown for you to APPROVE (the human gate)
+ *   building  → the Generator agent is running (/api/generate)
+ *   done      → the finished landing page is shown (preview + download)
+ *
+ * The two backend calls are made with `streamSSE(...)`, which reads the server's
+ * live Server-Sent Events ("progress" → "done"/"error") and updates the screen.
+ *
+ * Persistent things (conversation history, settings/credentials, theme, sidebar
+ * state) are saved in the browser's localStorage so they survive a refresh.
+ *
+ * Everything below is grouped: (1) constants + helpers, then (2) the <Home>
+ * component = all the React state, the handlers, and the JSX layout.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import ArchitectureDiagram from "@/components/ArchitectureDiagram";
