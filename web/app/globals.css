@@ -1039,3 +1039,121 @@ textarea.field-input:focus {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
+
+/* --------------------------------------------------------------------------- */
+/* Settings modal                                                              */
+/* --------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--space-4);
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: menu-in 0.14s ease;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-6) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-tabs button {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.modal-tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.modal-body {
+  padding: var(--space-6);
+  overflow-y: auto;
+}
+
+.settings-field {
+  margin-bottom: var(--space-4);
+}
+
+.settings-section {
+  margin-bottom: var(--space-4);
+  padding-top: var(--space-2);
+}
+
+.settings-section h3 {
+  margin: 0 0 var(--space-1);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-section p.hint,
+.settings-field p.hint {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.settings-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.about-body p {
+  color: var(--ink);
+  margin: 0 0 var(--space-3);
+}
+
+.about-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  margin-bottom: var(--space-3);
+}

@@ -9,7 +9,7 @@
  * Both accept an optional per-request model id (the UI's model picker).
  */
 
-import { callModel } from "./llm";
+import { callModel, type Credentials } from "./llm";
 import type { Plan, Shop, Strategy } from "./types";
 
 // --------------------------------------------------------------------------- //
@@ -85,7 +85,11 @@ different places on the page.
 // --------------------------------------------------------------------------- //
 // Agent 1 — Strategist (brief -> editable plan)                               //
 // --------------------------------------------------------------------------- //
-export async function runStrategist(brief: string, model?: string): Promise<Plan> {
+export async function runStrategist(
+  brief: string,
+  model?: string,
+  creds?: Credentials,
+): Promise<Plan> {
   const prompt = `You are a senior brand strategist for small and medium businesses.
 A business owner describes their business and what they want, in their own words.
 First EXTRACT the business basics, then MAKE the marketing decisions.
@@ -121,7 +125,7 @@ Return ONLY a JSON object, no markdown:
     "key_messages": ["3 supporting points the page should make"]
   }
 }`;
-  return parseJson(await callModel(prompt, 0.6, model)) as Plan;
+  return parseJson(await callModel(prompt, 0.6, model, creds)) as Plan;
 }
 
 // --------------------------------------------------------------------------- //
@@ -131,6 +135,7 @@ export async function runGenerator(
   plan: Plan,
   images: string[],
   model?: string,
+  creds?: Credentials,
 ): Promise<string> {
   const shop = plan.business;
   const strategy: Strategy = plan.strategy;
@@ -185,7 +190,7 @@ RULES:
 
 Return ONLY the raw HTML, starting with <!DOCTYPE html>. No markdown fences.`;
 
-  const raw = await callModel(prompt, 0.8, model);
+  const raw = await callModel(prompt, 0.8, model, creds);
   let html = raw.trim().replace(/```html/g, "").replace(/```/g, "").trim();
   html = injectImages(html, images);
   return openLinksInNewTab(html);

@@ -27,6 +27,41 @@ interface Conversation {
 const MAX_PHOTOS = 5;
 const STORAGE_KEY = "pageforge.conversations";
 const SIDEBAR_KEY = "pageforge.sidebar";
+const SETTINGS_KEY = "pageforge.settings";
+
+interface Settings {
+  source: "default" | "gemini" | "vertex";
+  geminiApiKey: string;
+  vertexProjectId: string;
+  vertexProjectNumber: string;
+  vertexLocation: string;
+  vertexServiceAccountJson: string;
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  source: "default",
+  geminiApiKey: "",
+  vertexProjectId: "",
+  vertexProjectNumber: "",
+  vertexLocation: "europe-west1",
+  vertexServiceAccountJson: "",
+};
+
+/** Build the credential override sent to the backend, or undefined for default. */
+function credentialsFromSettings(s: Settings): Record<string, string> | undefined {
+  if (s.source === "gemini" && s.geminiApiKey.trim()) {
+    return { provider: "gemini", geminiApiKey: s.geminiApiKey.trim() };
+  }
+  if (s.source === "vertex" && s.vertexProjectId.trim()) {
+    return {
+      provider: "vertex",
+      vertexProject: s.vertexProjectId.trim(),
+      vertexLocation: s.vertexLocation.trim(),
+      vertexServiceAccountJson: s.vertexServiceAccountJson.trim(),
+    };
+  }
+  return undefined;
+}
 
 const SUGGESTIONS = [
   "A cozy specialty coffee shop in Lisbon focused on single-origin pour-overs for remote workers.",
@@ -188,6 +223,9 @@ export default function Home() {
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<"credentials" | "about">("credentials");
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -202,10 +240,21 @@ export default function Home() {
       if (raw) setConversations(JSON.parse(raw) as Conversation[]);
       const sb = localStorage.getItem(SIDEBAR_KEY);
       if (sb !== null) setSidebarOpen(sb === "1");
+      const st = localStorage.getItem(SETTINGS_KEY);
+      if (st) setSettings({ ...DEFAULT_SETTINGS, ...(JSON.parse(st) as Partial<Settings>) });
     } catch {
       /* ignore */
     }
   }, []);
+
+  // Persist settings whenever they change.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch {
+      /* ignore */
+    }
+  }, [settings]);
 
   // Detect Web Speech API support (Chrome/Edge/Safari).
   useEffect(() => {
@@ -248,6 +297,10 @@ export default function Home() {
   }
   function updateStrategy<K extends keyof Strategy>(key: K, value: Strategy[K]) {
     setPlan((p) => (p ? { ...p, strategy: { ...p.strategy, [key]: value } } : p));
+  }
+
+  function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
+    setSettings((s) => ({ ...s, [key]: value }));
   }
 
   function upsertConversation(conv: Conversation) {
@@ -407,7 +460,10 @@ export default function Home() {
     setSteps([]);
     setPhase("planning");
     try {
-      await streamSSE("/api/plan", { brief: text, model }, (event, payload) => {
+      await streamSSE(
+        "/api/plan",
+        { brief: text, model, credentials: credentialsFromSettings(settings) },
+        (event, payload) => {
         if (event === "progress") setSteps((s) => [...s, payload.label]);
         else if (event === "done") {
           const newPlan = payload.plan as Plan;
@@ -447,7 +503,10 @@ export default function Home() {
           key_messages: plan.strategy.key_messages.map((m) => m.trim()).filter(Boolean),
         },
       };
-      await streamSSE("/api/generate", { plan: cleaned, images, model }, (event, payload) => {
+      await streamSSE(
+        "/api/generate",
+        { plan: cleaned, images, model, credentials: credentialsFromSettings(settings) },
+        (event, payload) => {
         if (event === "progress") setSteps((s) => [...s, payload.label]);
         else if (event === "done") {
           const builtHtml = payload.html as string;
@@ -497,6 +556,155 @@ export default function Home() {
 
   return (
     <div className="shell">
+      {/* Settings modal */}
+      {settingsOpen && (
+        <div className="modal-overlay" onClick={() => setSettingsOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h2>Settings</h2>
+              <button
+                className="icon-btn"
+                onClick={() => setSettingsOpen(false)}
+                aria-label="Close settings"
+                title="Close"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-tabs">
+              <button
+                className={settingsTab === "credentials" ? "active" : ""}
+                onClick={() => setSettingsTab("credentials")}
+              >
+                Credentials
+              </button>
+              <button
+                className={settingsTab === "about" ? "active" : ""}
+                onClick={() => setSettingsTab("about")}
+              >
+                About
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {settingsTab === "credentials" ? (
+                <div>
+                  <div className="settings-field">
+                    <label>Credentials source</label>
+                    <select
+                      className="field-input"
+                      value={settings.source}
+                      onChange={(e) =>
+                        updateSetting("source", e.target.value as Settings["source"])
+                      }
+                    >
+                      <option value="default">App&apos;s built-in credentials (default)</option>
+                      <option value="gemini">My Gemini API key</option>
+                      <option value="vertex">My Vertex AI project</option>
+                    </select>
+                  </div>
+
+                  {settings.source === "gemini" && (
+                    <div className="settings-section">
+                      <h3>Gemini API key</h3>
+                      <p className="hint">
+                        Get a free key at aistudio.google.com/apikey. The agent will run on
+                        your account.
+                      </p>
+                      <div className="settings-field">
+                        <label>API key</label>
+                        <input
+                          type="text"
+                          value={settings.geminiApiKey}
+                          placeholder="AIza…"
+                          onChange={(e) => updateSetting("geminiApiKey", e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {settings.source === "vertex" && (
+                    <div className="settings-section">
+                      <h3>Vertex AI credentials</h3>
+                      <p className="hint">Run the agent on your own Google Cloud project.</p>
+                      <div className="settings-field">
+                        <label>Project ID</label>
+                        <input
+                          type="text"
+                          value={settings.vertexProjectId}
+                          placeholder="my-project-123456"
+                          onChange={(e) => updateSetting("vertexProjectId", e.target.value)}
+                        />
+                      </div>
+                      <div className="settings-field">
+                        <label>Project number (optional)</label>
+                        <input
+                          type="text"
+                          value={settings.vertexProjectNumber}
+                          placeholder="123456789012"
+                          onChange={(e) =>
+                            updateSetting("vertexProjectNumber", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="settings-field">
+                        <label>Location / region</label>
+                        <input
+                          type="text"
+                          value={settings.vertexLocation}
+                          placeholder="europe-west1"
+                          onChange={(e) => updateSetting("vertexLocation", e.target.value)}
+                        />
+                      </div>
+                      <div className="settings-field">
+                        <label>Service account JSON (raw JSON or base64)</label>
+                        <textarea
+                          className="field-input"
+                          rows={4}
+                          value={settings.vertexServiceAccountJson}
+                          placeholder='{ "type": "service_account", ... }'
+                          onChange={(e) =>
+                            updateSetting("vertexServiceAccountJson", e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="settings-note">
+                    🔒 Credentials are stored only in this browser and are sent to the
+                    server solely to run the agent on your behalf. This is a course demo —
+                    please don&apos;t paste production secrets. Leave the source on
+                    “default” to use the app&apos;s own configured credentials.
+                  </div>
+                </div>
+              ) : (
+                <div className="about-body">
+                  <span className="about-tag">IE University · Generative AI</span>
+                  <p>
+                    <strong>PageForge</strong> is a student project built for the{" "}
+                    <strong>Generative AI</strong> course at <strong>IE University</strong>.
+                  </p>
+                  <p>
+                    It is a <strong>demo / MVP</strong>, not production-ready software. It
+                    showcases an agentic, strategy-first pipeline — a Strategist agent plans
+                    the marketing, then a Generator agent builds a landing page — using
+                    Google Gemini / Vertex AI, deployed on Vercel.
+                  </p>
+                  <p style={{ color: "var(--ink-muted)" }}>
+                    Generated pages and strategies are AI-produced and may be inaccurate or
+                    biased. Don&apos;t use them for real business decisions without review.
+                    No warranty is provided.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left rail — sidebar toggle + full screen */}
       <nav className="rail">
         <button
@@ -525,6 +733,17 @@ export default function Home() {
               <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
           )}
+        </button>
+        <button
+          className="rail-btn"
+          onClick={() => setSettingsOpen(true)}
+          title="Settings"
+          aria-label="Settings"
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H1a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 2.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H7a1.65 1.65 0 0 0 1-1.51V1a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V7c.36.62 1 1 1.71 1H23a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
         </button>
       </nav>
 

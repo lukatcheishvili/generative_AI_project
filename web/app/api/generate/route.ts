@@ -12,6 +12,7 @@
  */
 
 import { runGenerator } from "@/lib/agents";
+import type { Credentials } from "@/lib/llm";
 import { BUILD_STEP, type Plan } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  let body: { plan?: unknown; images?: unknown; model?: unknown };
+  let body: { plan?: unknown; images?: unknown; model?: unknown; credentials?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
   const plan = body.plan as Plan | undefined;
   const images = Array.isArray(body.images) ? (body.images as string[]) : [];
   const model = typeof body.model === "string" ? body.model : undefined;
+  const credentials = (body.credentials as Credentials | undefined) || undefined;
 
   if (!plan || !plan.business || !plan.strategy) {
     return new Response("Missing or malformed field: plan", { status: 400 });
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
         );
       try {
         send("progress", { label: BUILD_STEP });
-        const html = await runGenerator(plan, images, model);
+        const html = await runGenerator(plan, images, model, credentials);
         send("done", { html });
       } catch (err) {
         const message =

@@ -13,6 +13,7 @@
  */
 
 import { runStrategist } from "@/lib/agents";
+import type { Credentials } from "@/lib/llm";
 import { PLAN_STEP } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  let body: { brief?: unknown; model?: unknown };
+  let body: { brief?: unknown; model?: unknown; credentials?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
 
   const brief = typeof body.brief === "string" ? body.brief.trim() : "";
   const model = typeof body.model === "string" ? body.model : undefined;
+  const credentials = (body.credentials as Credentials | undefined) || undefined;
   if (!brief) {
     return new Response("Missing required field: brief", { status: 400 });
   }
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
         );
       try {
         send("progress", { label: PLAN_STEP });
-        const plan = await runStrategist(brief, model);
+        const plan = await runStrategist(brief, model, credentials);
         send("done", { plan });
       } catch (err) {
         const message =

@@ -20,15 +20,29 @@ export function activeProvider(): "gemini" | "vertex" {
     : "gemini";
 }
 
+/**
+ * Optional per-request credential overrides (from the Settings panel) so a user
+ * can run the agent on their OWN keys instead of the server's defaults.
+ */
+export interface Credentials {
+  provider?: "gemini" | "vertex";
+  geminiApiKey?: string;
+  vertexProject?: string;
+  vertexLocation?: string;
+  vertexServiceAccountJson?: string;
+}
+
 export async function callModel(
   prompt: string,
   temperature = 0.7,
   model?: string,
+  creds?: Credentials,
 ): Promise<string> {
   const modelName = model || MODEL_NAME;
-  return activeProvider() === "vertex"
-    ? callVertex(prompt, temperature, modelName)
-    : callGemini(prompt, temperature, modelName);
+  const provider = creds?.provider || activeProvider();
+  return provider === "vertex"
+    ? callVertex(prompt, temperature, modelName, creds)
+    : callGemini(prompt, temperature, modelName, creds);
 }
 
 // --------------------------------------------------------------------------- //
@@ -38,10 +52,13 @@ async function callGemini(
   prompt: string,
   temperature: number,
   modelName: string,
+  creds?: Credentials,
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = creds?.geminiApiKey?.trim() || process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set (required when LLM_PROVIDER=gemini).");
+    throw new Error(
+      "No Gemini API key. Add one in Settings, or configure GEMINI_API_KEY on the server.",
+    );
   }
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
@@ -59,14 +76,18 @@ async function callVertex(
   prompt: string,
   temperature: number,
   modelName: string,
+  creds?: Credentials,
 ): Promise<string> {
-  const project = process.env.GOOGLE_CLOUD_PROJECT;
-  const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+  const project = creds?.vertexProject?.trim() || process.env.GOOGLE_CLOUD_PROJECT;
+  const location =
+    creds?.vertexLocation?.trim() || process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
   if (!project) {
-    throw new Error("GOOGLE_CLOUD_PROJECT is not set (required when LLM_PROVIDER=vertex).");
+    throw new Error(
+      "No Vertex project. Add one in Settings, or configure GOOGLE_CLOUD_PROJECT on the server.",
+    );
   }
 
-  const credentials = serviceAccountCredentials();
+  const credentials = serviceAccountCredentials(creds?.vertexServiceAccountJson);
   const vertex = new VertexAI({
     project,
     location,
@@ -95,8 +116,8 @@ async function callVertex(
  * Accepts either raw JSON or a base64 encoding of it (base64 is easier to paste
  * into a Vercel env var). Returns undefined to fall back to ADC.
  */
-function serviceAccountCredentials(): Record<string, unknown> | undefined {
-  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+function serviceAccountCredentials(override?: string): Record<string, unknown> | undefined {
+  let raw = override?.trim() || process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
   if (!raw) return undefined;
 
   // Tolerate a value that was pasted wrapped in quotes.
