@@ -1281,7 +1281,7 @@ textarea.field-input:focus {
 /* Hover popover inside the architecture diagram (dark card) */
 .arch-tip {
   background: #16171c;
-  border: 1px solid #2c2f38;
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 10px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
   padding: 14px 16px;

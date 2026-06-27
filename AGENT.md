@@ -97,6 +97,12 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
    **only server-side** (the API routes). Keys never reach the browser.
 6. **`npm run build` must pass** before merging. Don't mark work done on a red build.
 7. **Keep docs in sync** — update `README.md`, this file, `web/AGENT.md`, and the log below.
+8. **Read this file first, every session.** Before doing any work, analyze `AGENT.md` — the
+   rules, the current status (§1), the **Open actions** (§6), and the **PROJECT LOG** at the
+   bottom — so you know **what has been done and what still needs doing**, then continue from
+   there. When you finish a piece of work, add it to the PROJECT LOG.
+9. **Greet the contributor by name.** Begin every reply by addressing the person you're working
+   with by their name (e.g. "Hey Luka, …") before you start generating or making changes.
 
 ## 6. Open actions / where to continue
 
