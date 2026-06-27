@@ -31,7 +31,7 @@ The defining flow. The agent never jumps straight to generating:
 user brief ──▶ /api/plan  (Strategist)  ──▶ editable PLAN CARD
                                                │ user confirms / edits
                                                ▼
-                          /api/build (Generator) ──▶ landing page in canvas
+                       /api/generate (Generator) ──▶ landing page in canvas
 ```
 
 This is the same "interrupt before you act" idea as the original graph: produce a

@@ -2,7 +2,7 @@
  * The pipeline as a LangGraph.js graph: strategist -> generator.
  *
  * In the web app the two agents are invoked as SEPARATE requests (/api/plan
- * then /api/build) so a human can approve the plan in between — the
+ * then /api/generate) so a human can approve the plan in between — the
  * "interrupt before you act" gate from the original design. This graph is the
  * canonical, non-interactive view of the same pipeline (used for tests / a
  * future one-shot path) and keeps the multi-agent structure documented in code.
