@@ -45,82 +45,82 @@ const BOXES: Record<string, BoxDef> = {
 type Insight = { why: string; what: string; input: string; output: string };
 const INSIGHTS: Record<string, Insight> = {
   chat: {
-    why: "It's the only thing a non-technical user touches — the whole product is driven from here.",
-    what: "Lets you describe your business, review the plan, watch progress, and preview or download the page.",
-    input: "Your typed (or spoken) brief, edits to the plan, and clicks.",
-    output: "Requests to the backend; shows the strategy and the finished page.",
+    why: "It's the single screen a non-technical owner works with, so the whole product has to be simple and guided. Everything the user does flows from here.",
+    what: "Lets you describe your business in plain words, review and edit the AI's marketing plan, watch live progress, and preview or download the finished landing page.",
+    input: "Your typed or spoken description, your edits to the plan, the photos you attach, and your clicks.",
+    output: "Sends those requests to the backend and shows what comes back — the marketing plan and the final page.",
   },
   hist: {
-    why: "So your past pages and your own keys persist between visits — no login needed.",
-    what: "Saves each generated page and your credential settings in the browser.",
-    input: "Conversations you create; credentials you enter in Settings.",
-    output: "Reloads a past page; supplies credentials to each request.",
+    why: "So your past pages and your own API keys are remembered between visits without needing any account or login.",
+    what: "Saves every generated page and your credential settings directly in the browser (localStorage). Click a past chat to reopen it.",
+    input: "The conversations you create and the credentials you enter in the Settings panel.",
+    output: "Reloads a previous page on demand, and supplies your saved credentials to each request.",
   },
   photo: {
-    why: "Real photos make the page look like a real brand, not a stock template.",
-    what: "Lets you attach your own images, which are shrunk and embedded into the page.",
-    input: "Image files you upload.",
-    output: "Compact base64 images placed into the landing page.",
+    why: "Real photos make the generated page look like an actual brand instead of a generic stock template — a big quality difference.",
+    what: "Lets you attach your own images. Each one is shrunk in the browser and turned into text (base64) so it can be embedded directly inside the single HTML file.",
+    input: "The image files you upload (you're asked for at least 3).",
+    output: "Compact base64 images that the Generator places into the landing page.",
   },
   front: {
-    why: "The web app users load — it renders the interface and talks to the backend.",
-    what: "A Next.js page that serves the UI and streams results live.",
-    input: "User actions from the Chat UI.",
-    output: "Calls to /api/plan and /api/generate; live updates back to the screen.",
+    why: "This is the web app every visitor loads — it draws the whole interface and is the bridge between the user and the AI backend.",
+    what: "A Next.js page (page.tsx) that renders the chat UI and streams the agents' results back to the screen in real time.",
+    input: "User actions from the Chat UI (the brief, the approval, the photos).",
+    output: "Calls to the two API routes (/api/plan, /api/generate) and live on-screen updates as results stream in.",
   },
   plan: {
-    why: "Keeps the 'thinking' step on the server, where the AI keys live safely.",
-    what: "A serverless endpoint that runs the Strategist and streams its progress.",
-    input: "Your business brief, the chosen model and credentials.",
-    output: "A structured marketing plan, streamed back.",
+    why: "It keeps the AI 'thinking' step on the server, where the secret API keys live safely and can never reach the browser.",
+    what: "A small backend endpoint (serverless) that runs the Strategist agent and streams its progress and result back live.",
+    input: "Your business brief, the model you picked, and any credentials.",
+    output: "A structured marketing plan (as data), streamed back to the UI for you to approve.",
   },
   gen: {
-    why: "Separates building the page from planning it, so each step is simple and safe.",
-    what: "A serverless endpoint that runs the Generator and streams the result.",
-    input: "The approved plan and your photos.",
-    output: "A complete HTML landing page, streamed back.",
+    why: "Building the page is kept separate from planning it, so each step stays simple, testable, and safe.",
+    what: "A second backend endpoint (serverless) that runs the Generator agent and streams the finished page back.",
+    input: "The plan you approved plus your photos.",
+    output: "A complete, self-contained HTML landing page, streamed back to the browser.",
   },
   strat: {
-    why: "Most AI page builders skip strategy and produce generic copy — this fixes that.",
-    what: "An AI agent that decides positioning, audience, tone and key messages first.",
-    input: "Your free-text business description.",
-    output: "A structured marketing plan for you to review.",
+    why: "Most AI page builders skip strategy and produce generic copy. Forcing a dedicated 'decisions first' agent is what makes this project genuinely useful.",
+    what: "An AI agent (a Gemini prompt) that acts like a brand strategist: it decides positioning, target audience, tone, value proposition, and key messages — before any page is written.",
+    input: "Your free-text description of the business and what you want.",
+    output: "A structured marketing plan (strict JSON) that the app shows you to review.",
   },
   appr: {
-    why: "A human checks the plan before anything is built — prevents wasted or wrong output.",
-    what: "A review step where you can edit the plan and confirm it.",
+    why: "A human checks and can edit the plan before anything is built. This 'human-in-the-loop' gate prevents wasted time and off-brand output.",
+    what: "A review step in the UI: the plan appears as an editable card, and nothing is generated until you click 'Confirm & build'.",
     input: "The Strategist's proposed plan.",
-    output: "An approved (possibly edited) plan.",
+    output: "An approved — and possibly edited — plan, ready for the Generator.",
   },
   gener: {
-    why: "Turns the approved strategy into something real and usable.",
-    what: "An AI agent that writes a full, styled, single-file web page.",
+    why: "It turns the approved strategy into something real and usable: an actual, styled web page the owner can publish.",
+    what: "An AI agent (a Gemini prompt) that acts like a boutique web designer and writes a full, single-file, styled HTML page that executes the strategy precisely.",
     input: "The approved plan and your photos.",
-    output: "A downloadable HTML landing page.",
+    output: "A complete HTML landing page you can preview, open full-size, and download.",
   },
   seam: {
-    why: "Lets the app run on different AI providers without changing any other code.",
-    what: "A single switch that routes every AI call to Gemini API or Vertex AI.",
-    input: "A prompt plus which provider and credentials to use.",
-    output: "The model's response, from whichever provider is selected.",
+    why: "It lets the whole app run on different AI providers without changing any other code — a key piece of technical flexibility.",
+    what: "A single function (callModel) that every AI request goes through. It routes the request to either the Gemini API or Vertex AI based on one setting.",
+    input: "A prompt, the chosen model, and which provider/credentials to use.",
+    output: "The model's text response, from whichever provider is currently selected.",
   },
   gemapi: {
-    why: "The quickest way to run the app — just one free API key.",
-    what: "Google's hosted Gemini service, accessed with an API key.",
-    input: "Prompts and your Gemini API key.",
-    output: "Generated text (the plan or the page).",
+    why: "The quickest, easiest way to run the app — anyone can get a free key and start generating.",
+    what: "Google's hosted Gemini service, accessed with a single API key.",
+    input: "Prompts plus a Gemini API key (the app's, or your own from Settings).",
+    output: "Generated text — the marketing plan, or the HTML page.",
   },
   vertex: {
-    why: "The enterprise option — runs on your own Google Cloud project.",
-    what: "Google Cloud's Vertex AI, accessed with a service account.",
-    input: "Prompts and your Cloud project credentials.",
-    output: "Generated text (the plan or the page).",
+    why: "The enterprise-grade option: it runs on your own Google Cloud project with proper service-account security and region control.",
+    what: "Google Cloud's Vertex AI, accessed with a service-account credential and a chosen region.",
+    input: "Prompts plus your Cloud project ID, region, and service-account credentials.",
+    output: "Generated text — the marketing plan, or the HTML page.",
   },
   flash: {
-    why: "The actual brain that writes the strategy and the page.",
-    what: "Google's Gemini 2.5 model that generates the text.",
-    input: "The prompts from the Strategist and Generator.",
-    output: "The marketing plan and the HTML page.",
+    why: "This is the actual 'brain' — the model that writes both the strategy and the page.",
+    what: "Google's Gemini 2.5 Flash model. It's fast and cheap, which keeps the demo responsive. Temperature is lower for the Strategist (focused) and higher for the Generator (creative).",
+    input: "The carefully written prompts sent by the Strategist and Generator agents.",
+    output: "The marketing-plan JSON and the finished HTML landing page.",
   },
 };
 
@@ -164,9 +164,9 @@ function uedge(s: BoxDef, t: BoxDef) {
 }
 
 function tipPos(b: BoxDef) {
-  const W = 352, H = 250;
+  const W = 392, H = 370;
   let tx = b.x + b.w + 16;
-  if (tx + W > 1150) tx = b.x - W - 16;
+  if (tx + W > 1158) tx = b.x - W - 16;
   let ty = b.y - 8;
   if (ty + H > 1430) ty = 1430 - H;
   if (ty < -110) ty = -110;

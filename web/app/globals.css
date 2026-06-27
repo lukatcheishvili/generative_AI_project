@@ -1278,24 +1278,24 @@ textarea.field-input:focus {
   overflow: hidden;
 }
 
-/* Hover popover inside the architecture diagram */
+/* Hover popover inside the architecture diagram (dark card) */
 .arch-tip {
-  background: #ffffff;
-  border: 1px solid #d0d5dd;
+  background: #16171c;
+  border: 1px solid #2c2f38;
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  padding: 12px 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  padding: 14px 16px;
   font-family: var(--font-sans);
 }
 
 .arch-tip-title {
   font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 14.5px;
+  margin-bottom: 10px;
 }
 
 .arch-tip-row {
-  margin-bottom: 7px;
+  margin-bottom: 9px;
 }
 
 .arch-tip-row:last-child {
@@ -1308,14 +1308,15 @@ textarea.field-input:focus {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #98a2b3;
+  color: #8b93a4;
+  margin-bottom: 1px;
 }
 
 .arch-tip-row p {
-  margin: 1px 0 0;
+  margin: 0;
   font-size: 12px;
-  line-height: 1.35;
-  color: #1d2433;
+  line-height: 1.42;
+  color: #e6ebf2;
 }
 
 .arch-svg {
