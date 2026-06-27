@@ -353,6 +353,48 @@ button {
   filter: brightness(0) invert(1);
 }
 
+/* --------------------------------------------------------------------------- */
+/* Custom Figma-style cursor                                                   */
+/* --------------------------------------------------------------------------- */
+/* Hide the native cursor on EVERY element so there's never a second pointer. */
+html.cursor-on,
+html.cursor-on * {
+  cursor: none !important;
+}
+
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-100px, -100px);
+  will-change: transform;
+  transition: opacity 0.12s ease;
+}
+
+.custom-cursor svg {
+  display: block;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.3));
+}
+
+.custom-cursor-label {
+  position: absolute;
+  top: 22px;
+  left: 14px;
+  background: #18a0fb;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
 .topbar-right {
   display: flex;
   align-items: center;

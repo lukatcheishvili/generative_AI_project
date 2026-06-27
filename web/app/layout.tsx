@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CustomCursor from "@/components/CustomCursor";
 
 export const metadata: Metadata = {
-  title: "PageForge — AI landing pages",
+  title: "PageForge",
   description:
     "Describe your business; the agent plans the marketing strategy, you approve it, and it builds a real landing page.",
+  icons: { icon: "/ie-logo.png" },
 };
 
 // Set the theme before first paint to avoid a flash of the wrong theme.
@@ -30,6 +32,7 @@ export default function RootLayout({
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {children}
+        <CustomCursor />
       </body>
     </html>
   );
