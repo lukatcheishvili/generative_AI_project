@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PageForge — Two-Agent GenAI Presentation</title>
+  <meta name="description" content="PageForge: a strategy-first, two-agent GenAI landing-page generator. Generative AI final project, IE University.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Load fonts without blocking render, so the deck shows instantly (falls back to Inter/system if offline). -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+  <style>
+    html[data-theme=dark]{
+      --primary:#fff;--on-primary:#000;--accent-blue:#0099ff;--accent-violet:#6a4cf5;--accent-magenta:#d44df0;--accent-orange:#ff7a3d;--accent-coral:#ff5577;--accent-green:#22c55e;
+      --page-bg:#000;--canvas:#090909;--surface-1:#141414;--surface-2:#1c1c1c;--hairline:#262626;--hairline-soft:#1a1a1a;--ink:#fff;--ink-muted:#999;
+      --rail-bg:rgba(9,9,9,.96);--control-bg:rgba(20,20,20,.64);--control-fg:rgba(255,255,255,.88);--control-border:rgba(255,255,255,.11);--control-hover-bg:rgba(40,40,40,.9);--control-hover-border:rgba(255,255,255,.24);
+      --gradient-hero:radial-gradient(950px 760px at 18% 22%,rgba(106,76,245,.58),rgba(106,76,245,.12) 45%,transparent 68%),radial-gradient(780px 640px at 82% 82%,rgba(44,31,176,.22),transparent 60%),#050506;
+      --gradient-card:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.025));
+    }
+    html[data-theme=light]{
+      --primary:#FF6022;--on-primary:#fff;--accent-blue:#FF6022;--accent-violet:#6a4cf5;--accent-magenta:#FF9E80;--accent-orange:#FF6022;--accent-coral:#72BF44;--accent-green:#3E8E1F;
+      --page-bg:#dfe1e6;--canvas:#fff;--surface-1:#F5F5F5;--surface-2:#EFEFF1;--hairline:#E6E6EA;--hairline-soft:#EDEDF0;--ink:#23262B;--ink-muted:#545B62;
+      --rail-bg:rgba(255,255,255,.96);--control-bg:rgba(255,255,255,.78);--control-fg:#23262B;--control-border:rgba(35,38,43,.12);--control-hover-bg:rgba(245,245,245,.96);--control-hover-border:rgba(255,96,34,.40);
+      --gradient-hero:radial-gradient(1000px 720px at 24% 20%,rgba(255,96,34,.22),transparent 60%),radial-gradient(860px 640px at 82% 82%,rgba(106,76,245,.14),transparent 62%),#fff;
+      --gradient-card:linear-gradient(145deg,rgba(255,96,34,.08),rgba(106,76,245,.045));
+    }
+    :root{--deck-rail-w:214px;--stage-scale:.5;--stage-x:0px;--stage-y:0px;--font-display:"Geist","GT Walsheim","Inter",system-ui,sans-serif;--font-body:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{background:var(--page-bg);color:var(--ink);font-family:var(--font-body);overflow:hidden;transition:background .28s ease}
+
+    /* Stage */
+    .deck-stage{position:fixed;inset:0;overflow:hidden}
+    .stage-slide{width:1920px;height:1080px;display:none;position:absolute;left:var(--stage-x);top:var(--stage-y);overflow:hidden;transform:scale(var(--stage-scale));transform-origin:top left}
+    .stage-slide.active{display:block}
+    .slide-shell{width:1920px;height:1080px;padding:56px 96px;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--gradient-hero);color:var(--ink)}
+    .slide-shell:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:96px 96px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0,transparent 70%);mask-image:radial-gradient(circle at 50% 45%,#000 0,transparent 70%);opacity:.11;pointer-events:none}
+    html[data-theme=light] .slide-shell:before{opacity:.18;background-image:linear-gradient(rgba(35,38,43,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(35,38,43,.035) 1px,transparent 1px)}
+    .slide-shell>*{position:relative;z-index:1}
+
+    .slide-top,.slide-bottom{display:flex;align-items:center;justify-content:space-between;gap:22px;flex:0 0 auto}
+    .slide-top{font-size:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted)}
+    .slide-top .left,.slide-top .right{display:flex;align-items:center;gap:14px}
+    .brand-mark{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--accent-blue);color:#fff;font-size:12px;letter-spacing:-.4px;font-weight:800}
+    .section-circle{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--hairline);font-family:var(--font-display);font-size:15px;font-variant-numeric:tabular-nums;letter-spacing:-.3px;color:var(--ink)}
+    .slide-bottom{margin-top:auto;padding-top:24px;font-size:13px;color:var(--ink-muted)}
+
+    .eyebrow{font-size:15px;letter-spacing:.11em;text-transform:uppercase;color:var(--accent-blue);font-weight:700;margin:0}
+    .h-display{font-family:var(--font-display);font-weight:680;color:var(--ink);margin:0}
+    .h-lg{font-size:92px;line-height:.95;letter-spacing:-4.6px}
+    .h-md{font-size:60px;line-height:1.02;letter-spacing:-3px}
+    .h-sm{font-size:46px;line-height:1.04;letter-spacing:-2.3px}
+    .lead{font-size:28px;line-height:1.35;color:var(--ink-muted);margin:0;max-width:1400px}
+    .slide-main{margin-top:30px;flex:1;display:flex;flex-direction:column;min-height:0}
+    .head-eyebrow{margin-bottom:16px}
+
+    /* Rise animation */
+    .reveal{opacity:0;transform:translateY(28px);filter:blur(8px);animation:rise .78s cubic-bezier(.22,.61,.36,1) forwards;animation-delay:calc(var(--d,0)*90ms)}
+    .d1{--d:1}.d2{--d:2}.d3{--d:3}.d4{--d:4}.d5{--d:5}.d6{--d:6}.d7{--d:7}.d8{--d:8}.d9{--d:9}
+    @keyframes rise{to{opacity:1;transform:none;filter:blur(0)}}
+
+    .pill{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--hairline);border-radius:999px;padding:10px 18px;background:rgba(255,255,255,.045);color:var(--ink);font-weight:650;font-size:15px}
+    html[data-theme=light] .pill{background:rgba(35,38,43,.04)}
+    .pill.solid{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff}
+
+    /* Title slide */
+    .title-main{height:100%;display:flex;flex-direction:column}
+    .title-body{flex:1;display:grid;grid-template-rows:1fr auto;gap:24px;min-height:0}
+    .title-head{align-self:center}
+    .title-word{font-family:var(--font-display);font-size:172px;line-height:.88;letter-spacing:-7px;margin:0;color:var(--ink)}
+    .title-lead{max-width:1100px;margin-top:40px;font-size:30px;line-height:1.35;color:var(--ink-muted)}
+    .title-meta{display:grid;grid-template-columns:420px 420px auto;gap:48px;align-items:end}
+    .title-meta>div.col{border-right:1px solid var(--hairline);padding-right:40px}
+    .title-meta span{display:block;color:var(--ink-muted);font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+    .title-meta strong{font-family:var(--font-display);font-size:30px;letter-spacing:-1px;color:var(--ink)}
+    .title-pills{display:flex;gap:12px}
+
+    /* Slide 2 — Problem: statement + divided list */
+    .problem-split{display:grid;grid-template-columns:1.05fr .95fr;gap:80px;flex:1;align-items:stretch;min-height:0}
+    .ps-left{display:flex;flex-direction:column;justify-content:center}
+    .plist{display:flex;flex-direction:column;justify-content:space-between}
+    .pitem{padding:34px 0;border-top:1px solid var(--hairline)}
+    .pitem:first-child{border-top:none;padding-top:0}
+    .pitem .pk{font-family:var(--font-display);font-size:30px;letter-spacing:-1px;color:var(--accent-blue);margin:0 0 10px}
+    .pitem p{margin:0;font-size:21px;line-height:1.45;color:var(--ink-muted)}
+
+    /* Slide 4 — Experience: numbered step flow */
+    .steps{display:grid;grid-template-columns:1fr 48px 1fr 48px 1fr 48px 1fr;align-items:stretch;flex:1;min-height:0;margin-top:40px}
+    .step{display:flex;flex-direction:column;justify-content:center;gap:26px}
+    .step .sn{font-family:var(--font-display);font-size:24px;letter-spacing:.16em;color:var(--accent-blue);font-weight:700}
+    .step h3{font-family:var(--font-display);font-size:42px;line-height:1;letter-spacing:-1.8px;margin:18px 0 16px;color:var(--ink)}
+    .step p{margin:0;font-size:20px;line-height:1.42;color:var(--ink-muted)}
+    .step-arrow{display:grid;place-items:center;color:var(--accent-blue);font-size:40px;font-weight:700}
+
+    /* Slide 5 — Business Case: borderless big-number stat row */
+    .statline{display:grid;grid-template-columns:repeat(4,1fr);align-items:stretch;flex:1;min-height:0;margin-top:40px}
+    .statline>div{padding:0 48px;border-left:1px solid var(--hairline);display:flex;flex-direction:column;justify-content:center}
+    .statline>div:first-child{border-left:none;padding-left:0}
+    .statline strong{display:block;font-family:var(--font-display);font-size:84px;line-height:.92;letter-spacing:-3.4px;color:var(--ink)}
+    .statline b{display:block;margin-top:22px;font-family:var(--font-display);font-size:24px;letter-spacing:-.6px;color:var(--ink)}
+    .statline p{margin:12px 0 0;font-size:18px;line-height:1.4;color:var(--ink-muted)}
+
+    /* Slide 6 — Architecture: boxed flow */
+    .flow{display:grid;grid-template-columns:1fr 60px 1fr 60px 1fr;gap:14px;align-items:stretch;margin-top:44px;flex:1 1 auto;min-height:0}
+    .flow-card{border:1px solid var(--hairline);background:var(--gradient-card),var(--surface-1);border-radius:22px;padding:34px;display:flex;flex-direction:column;justify-content:center;gap:16px}
+    .flow-ic{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;background:rgba(0,153,255,.12);border:1px solid var(--accent-blue);color:var(--accent-blue);margin-bottom:6px}
+    .flow-ic svg{width:30px;height:30px}
+    .flow-card.gate{border-color:var(--accent-blue);box-shadow:0 0 0 1px var(--accent-blue) inset,0 24px 80px rgba(0,153,255,.12)}
+    .flow-card .ft{font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-blue)}
+    .flow-card h3{font-family:var(--font-display);font-size:40px;line-height:1;letter-spacing:-1.8px;margin:0;color:var(--ink)}
+    .flow-card .chip{align-self:flex-start;border:1px solid var(--hairline-soft);background:var(--surface-2);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;letter-spacing:.04em;color:var(--ink-muted)}
+    .flow-card p{margin:0;font-size:20px;line-height:1.4;color:var(--ink-muted)}
+    .flow-arrow{display:grid;place-items:center;color:var(--accent-blue);font-size:50px;font-weight:700}
+    .band{margin-top:24px;border:1px solid var(--hairline);border-radius:18px;background:var(--surface-1);padding:22px 30px;display:flex;align-items:center;justify-content:space-between;gap:30px;flex:0 0 auto}
+    .band span{font-size:20px;color:var(--ink)}
+    .band span b{color:var(--accent-blue)}
+
+    /* Slide 7 — Strategist: split + plan card */
+    .split{display:grid;grid-template-columns:1fr 760px;gap:56px;align-items:center;margin-top:44px;flex:1 1 auto;min-height:0}
+    .bullets{display:grid;gap:26px;margin:0;padding:0}
+    .bullets li{list-style:none;font-family:var(--font-display);font-size:34px;line-height:1.28;letter-spacing:-1px;color:var(--ink);padding-left:34px;position:relative}
+    .bullets li:before{content:"—";position:absolute;left:0;color:var(--accent-blue);font-weight:700}
+    .plan-card{border:1px solid var(--hairline);background:var(--surface-1);border-radius:22px;padding:30px 34px}
+    .plan-card .pc-title{font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-blue);margin-bottom:22px}
+    .plan-card .kv{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;font-size:18px;line-height:2.0;color:var(--ink-muted)}
+    .plan-card .kv .k{color:var(--accent-violet)}
+    html[data-theme=light] .plan-card .kv .k{color:var(--accent-blue)}
+    .plan-card .kv .v{color:var(--ink)}
+
+    /* Slide 8 — Approval Gate: oversized numbered pillars */
+    .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:64px;flex:1;align-items:stretch;min-height:0;margin-top:40px}
+    .pillar{display:flex;flex-direction:column;justify-content:center}
+    .pillar .pn{font-family:var(--font-display);font-size:128px;line-height:.85;letter-spacing:-5px;color:var(--accent-blue);margin:0 0 24px}
+    .pillar h3{font-family:var(--font-display);font-size:46px;line-height:1;letter-spacing:-2px;margin:0 0 18px;color:var(--ink)}
+    .pillar p{margin:0;font-size:21px;line-height:1.45;color:var(--ink-muted);max-width:440px}
+
+    /* Slide 9 — Generator: A/B/C/D badge rows */
+    .badge-list{display:flex;flex-direction:column;flex:1;justify-content:space-between;min-height:0;margin-top:32px}
+    .brow{display:grid;grid-template-columns:96px 1fr;gap:36px;align-items:center;padding:28px 0;border-top:1px solid var(--hairline)}
+    .brow:first-child{border-top:none}
+    .brow .bg{width:72px;height:72px;border-radius:18px;display:grid;place-items:center;background:var(--accent-blue);color:#fff;font-family:var(--font-display);font-size:34px;font-weight:700}
+    .brow h3{font-family:var(--font-display);font-size:34px;letter-spacing:-1.4px;margin:0 0 6px;color:var(--ink)}
+    .brow p{margin:0;font-size:20px;color:var(--ink-muted)}
+
+    /* Slide 10 — Model: term ↔ description rows */
+    .def-list{display:flex;flex-direction:column;flex:1;justify-content:space-between;min-height:0;margin-top:32px}
+    .def{display:grid;grid-template-columns:520px 1fr;gap:56px;align-items:center;padding:40px 0;border-top:1px solid var(--hairline)}
+    .def:first-child{border-top:none}
+    .def .term .dl{display:block;font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-blue);margin-bottom:12px}
+    .def .term b{font-family:var(--font-display);font-size:48px;letter-spacing:-2px;color:var(--ink)}
+    .def p{margin:0;font-size:24px;line-height:1.4;color:var(--ink-muted)}
+
+    /* Slide 11 — Model Strategy: comparison */
+    .compare{display:grid;grid-template-columns:1fr 1fr;flex:1;align-items:stretch;min-height:0;margin-top:30px}
+    .compare>div{padding:0 70px;border-left:1px solid var(--hairline);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+    .compare p{margin-left:auto;margin-right:auto}
+    .compare>div:first-child{border-left:none;padding-left:0}
+    .compare .temp{font-family:var(--font-display);font-size:168px;line-height:.85;letter-spacing:-7px;color:var(--ink)}
+    .compare .clabel{margin-top:8px;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-blue)}
+    .compare h3{font-family:var(--font-display);font-size:40px;letter-spacing:-1.6px;margin:10px 0 14px;color:var(--ink)}
+    .compare p{margin:0;font-size:21px;line-height:1.45;color:var(--ink-muted);max-width:560px}
+
+    /* Slide 12 — Real-time & Robust: full-width numbered list */
+    .num-list{display:flex;flex-direction:column;flex:1;justify-content:space-between;min-height:0;margin-top:32px}
+    .nrow{display:grid;grid-template-columns:120px 380px 1fr;gap:40px;align-items:center;padding:26px 0;border-top:1px solid var(--hairline)}
+    .nrow:first-child{border-top:none}
+    .nrow .nn{font-family:var(--font-display);font-size:62px;line-height:1;letter-spacing:-2px;color:var(--accent-blue)}
+    .nrow h3{font-family:var(--font-display);font-size:32px;letter-spacing:-1.2px;margin:0;color:var(--ink)}
+    .nrow p{margin:0;font-size:21px;line-height:1.4;color:var(--ink-muted)}
+
+    /* Slide 13 — Live & Deployed: tech strip + hero URL */
+    .tech-strip{display:grid;grid-template-columns:repeat(4,1fr);align-items:stretch;flex:1;min-height:0;margin-top:40px}
+    .tech-strip>div{padding:0 44px;border-left:1px solid var(--hairline);display:flex;flex-direction:column;justify-content:center}
+    .tech-strip>div:first-child{border-left:none;padding-left:0}
+    .tech-strip .tl{display:block;font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-blue);margin-bottom:16px}
+    .tech-strip b{display:block;font-family:var(--font-display);font-size:46px;letter-spacing:-2px;color:var(--ink);margin-bottom:16px}
+    .tech-strip p{margin:0;font-size:19px;line-height:1.4;color:var(--ink-muted)}
+    .demo-band{margin-top:24px;flex:0 0 auto;border:1px solid var(--accent-blue);border-radius:22px;background:linear-gradient(145deg,rgba(0,153,255,.12),rgba(0,153,255,.03));padding:28px 40px;display:flex;align-items:center;justify-content:space-between;gap:30px}
+    .demo-band span{font-size:22px;color:var(--ink)}
+    .live-url{font-family:var(--font-display);font-size:48px;letter-spacing:-2px;color:var(--accent-blue);text-decoration:none}
+
+    /* Slide 14 — What's Next: mini roadmap + team */
+    .roadmap{display:flex;align-items:stretch;gap:18px;margin-top:36px;flex:0 0 auto}
+    .phase{flex:1;border:1px solid var(--hairline);background:var(--gradient-card),var(--surface-1);border-radius:20px;padding:28px 30px}
+    .phase .ph{font-family:var(--font-display);font-size:46px;line-height:1;color:var(--accent-blue);margin:0 0 18px}
+    .phase h3{font-family:var(--font-display);font-size:30px;letter-spacing:-1.2px;margin:0 0 10px;color:var(--ink)}
+    .phase p{margin:0;font-size:18px;line-height:1.4;color:var(--ink-muted)}
+    .team-label{margin:34px 0 18px;font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+    .people-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;flex:1 1 auto;min-height:0;align-content:stretch}
+    .person-card{display:flex;align-items:center;gap:18px;border:1px solid var(--hairline);background:var(--gradient-card),var(--surface-1);border-radius:18px;padding:22px 24px}
+    .person-card .avatar{flex:0 0 auto;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--accent-blue);color:#fff;font-weight:800;font-size:17px;font-family:var(--font-display)}
+    .person-card b{font-family:var(--font-display);font-size:24px;letter-spacing:-.6px;color:var(--ink)}
+
+    /* Product statement chips */
+    .flow-chips{display:flex;gap:14px;flex-wrap:wrap}
+
+    /* Slide 9 — Generator: badge list + output preview */
+    .gen-split{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;flex:1;align-items:stretch;min-height:0;margin-top:24px}
+    .gen-split .badge-list{margin-top:0}
+    .gen-output{display:flex;align-items:center;justify-content:center}
+    .win{width:100%;border:1px solid var(--hairline);border-radius:18px;background:var(--surface-1);overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.35)}
+    .win-bar{display:flex;align-items:center;gap:9px;padding:16px 20px;border-bottom:1px solid var(--hairline);background:var(--surface-2)}
+    .win-bar span{width:12px;height:12px;border-radius:50%;background:var(--hairline)}
+    .win-bar b{margin-left:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;color:var(--ink-muted);font-weight:600}
+    .win-body{padding:34px;display:flex;flex-direction:column;gap:20px}
+    .wf-nav{display:flex;align-items:center;justify-content:space-between}
+    .wf-logo{width:92px;height:16px;border-radius:6px;background:var(--ink-muted);opacity:.5}
+    .wf-links{display:flex;gap:14px}
+    .wf-links i{width:54px;height:10px;border-radius:5px;background:var(--hairline)}
+    .wf-hero{height:150px;border-radius:14px;background:linear-gradient(135deg,var(--accent-violet),var(--accent-blue))}
+    .wf-line{height:14px;border-radius:7px;background:var(--hairline)}
+    .wf-btn{width:150px;height:40px;border-radius:999px;background:var(--accent-blue)}
+    .wf-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+    .wf-cards>div{height:92px;border-radius:12px;border:1px solid var(--hairline);background:var(--surface-2)}
+    /* Recreated PageForge app UI inside the window */
+    .win-body.pf-app{padding:0;background:#0a0a0c;display:flex;flex-direction:column;min-height:500px;gap:0}
+    .pf-top{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .pf-brand{font-family:var(--font-display);font-size:18px;font-weight:700;color:#fff;letter-spacing:-.4px}
+    .pf-theme{width:26px;height:26px;border-radius:50%;background:#1c1c1e;border:1px solid #2c2c2e}
+    .pf-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px 28px;text-align:center}
+    .pf-h{font-family:var(--font-display);font-size:34px;font-weight:680;letter-spacing:-1.5px;color:#e9e9ee;margin:0}
+    .pf-sub{font-size:14px;line-height:1.45;color:#86868b;max-width:430px;margin:0}
+    .pf-chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:8px;max-width:560px}
+    .pf-chips span{font-size:12px;color:#d0d0d6;background:#161618;border:1px solid #2a2a2c;border-radius:999px;padding:8px 14px;white-space:nowrap}
+    .pf-composer{margin:0 22px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#161618;border:1px solid #2a2a2c;border-radius:16px;padding:14px 16px}
+    .pf-ph{font-size:14px;color:#6e6e73}
+    .pf-send{width:30px;height:30px;border-radius:50%;background:var(--accent-blue);flex:0 0 auto}
+
+    /* Slide 14 — What's Next: borderless roadmap + team */
+    .next-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:56px;margin-top:40px;flex:0 0 auto}
+    .next-item .nx{display:block;font-family:var(--font-display);font-size:58px;line-height:.9;letter-spacing:-2px;color:var(--accent-blue);margin-bottom:16px}
+    .next-item h3{font-family:var(--font-display);font-size:32px;letter-spacing:-1.2px;margin:0 0 10px;color:var(--ink)}
+    .next-item p{margin:0;font-size:19px;line-height:1.4;color:var(--ink-muted)}
+    .team-block{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;margin-top:8px}
+    .team-divider{border-top:1px solid var(--hairline);margin:0 0 36px}
+    .team-row{display:grid;grid-template-columns:repeat(3,1fr);gap:40px 56px}
+    .tperson{display:flex;align-items:center;gap:18px}
+    .tperson .avatar{flex:0 0 auto;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-violet),var(--accent-blue));color:#fff;font-weight:800;font-size:18px;font-family:var(--font-display)}
+    .tperson b{font-family:var(--font-display);font-size:25px;letter-spacing:-.6px;color:var(--ink)}
+
+    /* Slide 6 — Architecture diagram (light canvas + hover popovers, ported from the app) */
+    .arch-shell{background:#f4f4f5 !important;color:#1d1d1f;padding:46px 60px;position:relative}
+    .arch-shell:before{background-image:radial-gradient(circle,#d6d6db 1.4px,transparent 1.6px) !important;background-size:22px 22px !important;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0,transparent 78%) !important;mask-image:radial-gradient(circle at 50% 45%,#000 0,transparent 78%) !important;opacity:1 !important}
+    .arch-head h1{font-family:var(--font-display);font-size:48px;line-height:1;letter-spacing:-2.2px;margin:0;color:#1d1d1f}
+    .arch-head p{margin:10px 0 0;font-size:18px;color:#6e6e73}
+    .arch-svg-wrap{flex:1;min-height:0;margin-top:16px;display:flex}
+    #archsvg{width:100%;height:100%;display:block;font-family:var(--font-body)}
+    .absvg{cursor:default;transition:filter .15s ease}
+    .absvg:hover{filter:brightness(1.22)}
+    /* hover popover card (rendered inside an SVG foreignObject) */
+    .arch-tip{background:#16171c;border:1px solid rgba(255,255,255,.7);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);padding:16px 18px;font-family:var(--font-body)}
+    .arch-tip .pt{font-weight:700;font-size:16px;color:#fff;margin-bottom:11px}
+    .arch-tip .pr{margin-bottom:9px}
+    .arch-tip .pr:last-child{margin-bottom:0}
+    .arch-tip .pr span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#fff;margin-bottom:2px}
+    .arch-tip .pr p{margin:0;font-size:12.5px;line-height:1.4;color:#fff}
+
+    /* ---- Deck chrome ---- */
+    .deck-rail{position:fixed;left:0;top:0;bottom:0;width:var(--deck-rail-w);z-index:30;padding:24px 14px;display:flex;flex-direction:column;gap:18px;background:var(--rail-bg);border-right:1px solid var(--hairline);transform:translateX(-100%);transition:transform .28s cubic-bezier(.22,.61,.36,1),background .28s ease,border-color .28s ease;backdrop-filter:blur(18px)}
+    body.rail-open .deck-rail{transform:translateX(0)}
+    .deck-rail-head{padding:4px 4px 2px;display:grid;gap:7px}
+    .deck-rail-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-muted)}
+    .deck-rail-title{font-family:var(--font-display);font-size:22px;line-height:1;font-weight:650;letter-spacing:-1px;color:var(--ink)}
+    .deck-rail-sub{font-size:12px;line-height:1.35;color:var(--ink-muted)}
+    .deck-rail-list{display:grid;gap:8px;overflow:auto;padding-right:2px}
+    .deck-rail-button{border:1px solid transparent;border-radius:14px;background:transparent;padding:10px;text-align:left;display:grid;grid-template-columns:32px 1fr;gap:8px;align-items:center;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;color:inherit}
+    .deck-rail-button:hover{background:var(--surface-1);border-color:var(--hairline);transform:translateX(2px)}
+    .deck-rail-button.active{background:var(--surface-2);border-color:var(--accent-blue)}
+    .deck-rail-button small{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--ink);font-size:12px;font-variant-numeric:tabular-nums}
+    .deck-rail-button.active small{background:var(--accent-blue);color:#fff}
+    .deck-rail-button span{font-size:12px;line-height:1.15;color:var(--ink-muted)}
+    .deck-rail-button.active span{color:var(--ink)}
+    .rail-counter{margin-top:auto;border-top:1px solid var(--hairline);padding:14px 4px 0;display:flex;justify-content:space-between;gap:12px;color:var(--ink-muted);font-size:12px;font-variant-numeric:tabular-nums}
+
+    #rail-toggle,#fs-toggle,#theme-toggle,#notes-toggle{position:fixed;z-index:40;left:14px;width:42px;height:42px;border-radius:14px;border:1px solid var(--control-border);background:var(--control-bg);color:var(--control-fg);display:grid;place-items:center;cursor:pointer;box-shadow:0 16px 42px rgba(0,0,0,.18);backdrop-filter:blur(16px);transition:left .28s cubic-bezier(.22,.61,.36,1),transform .18s ease,background .2s ease,border-color .2s ease}
+    #rail-toggle{top:14px}#fs-toggle{top:64px}#theme-toggle{top:114px}#notes-toggle{top:164px}
+    body.rail-open #rail-toggle,body.rail-open #fs-toggle,body.rail-open #theme-toggle,body.rail-open #notes-toggle{left:calc(var(--deck-rail-w) + 12px)}
+    #rail-toggle:hover,#fs-toggle:hover,#theme-toggle:hover,#notes-toggle:hover{background:var(--control-hover-bg);border-color:var(--control-hover-border);transform:translateY(-1px)}
+    #rail-toggle:active,#fs-toggle:active,#theme-toggle:active,#notes-toggle:active{transform:scale(.94)}
+    #rail-toggle svg,#fs-toggle svg,#theme-toggle svg,#notes-toggle svg{width:19px;height:19px}
+
+    #nav-prev,#nav-next{position:fixed;z-index:40;bottom:22px;width:46px;height:46px;border-radius:14px;border:1px solid var(--control-border);background:var(--control-bg);color:var(--control-fg);display:grid;place-items:center;cursor:pointer;box-shadow:0 16px 42px rgba(0,0,0,.18);backdrop-filter:blur(16px);transition:transform .18s ease,background .2s ease,border-color .2s ease}
+    #nav-prev{right:78px}#nav-next{right:22px}
+    #nav-prev:hover,#nav-next:hover{background:var(--control-hover-bg);border-color:var(--control-hover-border);transform:translateY(-1px)}
+    #nav-prev svg,#nav-next svg{width:20px;height:20px}
+
+    .notes-panel{position:fixed;right:22px;top:22px;width:min(440px,calc(100vw - 44px));max-height:calc(100vh - 44px);overflow:auto;z-index:38;border:1px solid var(--hairline);border-radius:22px;background:var(--rail-bg);color:var(--ink);padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.28);backdrop-filter:blur(18px);opacity:0;transform:translateY(-10px);pointer-events:none;transition:opacity .22s ease,transform .22s ease,background .28s ease}
+    .notes-panel.open{opacity:1;transform:none;pointer-events:auto}
+    .notes-panel h2{margin:0 0 10px;font-family:var(--font-display);font-size:18px;letter-spacing:-.4px}
+    .notes-panel p{margin:0;color:var(--ink-muted);line-height:1.5;font-size:14px;white-space:pre-wrap}
+
+    .deck-progress{position:fixed;left:0;right:0;bottom:0;height:3px;z-index:45;background:rgba(255,255,255,.06)}
+    html[data-theme=light] .deck-progress{background:rgba(35,38,43,.08)}
+    .deck-progress span{display:block;width:0;height:100%;background:var(--accent-blue);transition:width .28s ease,background .28s ease}
+
+    /* Figma-style custom cursor (same as the app) — hide the native cursor everywhere so there's never a second pointer */
+    html.cursor-on, html.cursor-on *{cursor:none !important}
+    .custom-cursor{position:fixed;top:0;left:0;z-index:2147483647;pointer-events:none;opacity:0;transform:translate(-100px,-100px);will-change:transform;transition:opacity .12s ease}
+    .custom-cursor svg{display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.3))}
+  </style>
+</head>
+<body>
+  <div class="deck-stage" id="deck">
+
+    <!-- Slide 1 — Title -->
+    <section class="stage-slide" data-rail-title="Title" data-rail-sub="PageForge" data-notes="Opening. PageForge: a strategy-first, two-agent GenAI generator. A Strategist decides the marketing; a Generator builds the page; a human approves in between. Live at generative-ai-project-puce.vercel.app.">
+      <div class="slide-shell title-main">
+        <div class="slide-top">
+          <div class="left"><span class="brand-mark">PF</span><span>Generative AI · Final Project</span></div>
+          <div class="right"><span>Two-Agent GenAI · Human-in-the-Loop</span></div>
+        </div>
+        <div class="slide-main title-body">
+          <div class="title-head">
+            <h1 class="title-word reveal d1">PageForge</h1>
+            <p class="title-lead reveal d2">AI marketing strategy, then a landing page — a strategist that decides and a builder that executes.</p>
+          </div>
+          <div class="title-meta reveal d3">
+            <div class="col"><span>Live demo</span><strong><a href="https://generative-ai-project-puce.vercel.app" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">pageforge.com</a></strong></div>
+            <div class="col"><span>Approach</span><strong>Two-agent · human-in-the-loop</strong></div>
+            <div class="title-pills"><span class="pill">2026</span><span class="pill solid">IE University</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2 — The Problem (statement + divided list) -->
+    <section class="stage-slide" data-rail-title="The Problem" data-rail-sub="No strategy behind the page" data-notes="SMBs can't afford a strategist, so generic AI builders sell them a page with no strategy: no positioning, templated sameness, and no approval step.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">01</span><span>The Problem</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <div class="problem-split">
+            <div class="ps-left">
+              <p class="eyebrow head-eyebrow reveal d1">01 — The Problem</p>
+              <h2 class="h-display h-md reveal d2">SMBs can't afford a strategist, so AI builders sell them a page with no strategy behind it.</h2>
+            </div>
+            <div class="plist">
+              <div class="pitem reveal d3"><p class="pk">No strategy</p><p>Generic builders skip positioning, audience and conversion goal — the decisions that make a page work.</p></div>
+              <div class="pitem reveal d4"><p class="pk">Templated</p><p>One prompt asked to "make a website" defaults to stock copy and rainbow-gradient sameness.</p></div>
+              <div class="pitem reveal d5"><p class="pk">No control</p><p>The owner never gets to approve the thinking — the AI commits before anyone signs off.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>01 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 3 — The Product (statement) -->
+    <section class="stage-slide" data-rail-title="The Product" data-rail-sub="Strategy-first generator" data-notes="The product: a strategy-first generator. It makes the marketing decisions first, a human approves, then it builds the page.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">02</span><span>The Product</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main" style="justify-content:space-between;padding:30px 0 8px">
+          <p class="eyebrow reveal d1">02 — The Product</p>
+          <h2 class="h-display reveal d2" style="margin:0;max-width:1520px;font-size:72px;line-height:1.05;letter-spacing:-3px">A strategy-first generator that makes the marketing decisions first, lets a human approve them, then builds the page.</h2>
+          <div>
+            <p class="lead reveal d3" style="margin:0 0 26px;font-size:32px">Describe your business in a sentence. A Strategist plans, you approve, a Generator builds — a downloadable HTML page.</p>
+            <div class="flow-chips reveal d4">
+              <span class="pill">Describe</span><span class="pill">Plan</span><span class="pill">Approve</span><span class="pill solid">Build</span>
+            </div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>02 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 4 — The Experience (numbered step flow) -->
+    <section class="stage-slide" data-rail-title="The Experience" data-rail-sub="Plan Mode: describe → approve → build" data-notes="Plan Mode in four steps: Describe, Plan, Approve (the human gate), Build. Nothing is generated until you confirm.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">03</span><span>The Experience</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">03 — The Experience</p>
+          <h2 class="h-display h-sm reveal d2">Plan Mode: describe, approve, build.</h2>
+          <div class="steps">
+            <div class="step reveal d3"><div class="sn">Step 01</div><div class="step-b"><h3>Describe</h3><p>You tell PageForge about your business in plain language.</p></div></div>
+            <div class="step-arrow reveal d3">→</div>
+            <div class="step reveal d4"><div class="sn">Step 02</div><div class="step-b"><h3>Plan</h3><p>The Strategist drafts a marketing plan and shows it to you.</p></div></div>
+            <div class="step-arrow reveal d4">→</div>
+            <div class="step reveal d5"><div class="sn">Step 03</div><div class="step-b"><h3>Approve</h3><p>You review and edit the plan, then confirm. The human gate.</p></div></div>
+            <div class="step-arrow reveal d5">→</div>
+            <div class="step reveal d6"><div class="sn">Step 04</div><div class="step-b"><h3>Build</h3><p>The Generator turns the plan + your photos into a page.</p></div></div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>03 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 5 — The Business Case (borderless stat row) -->
+    <section class="stage-slide" data-rail-title="The Business Case" data-rail-sub="Automate the 80%" data-notes="Automate the 80% of mechanical work, keep the one decision that matters. Agency-grade strategy on an SMB budget, with low risk because nothing ships unapproved.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">04</span><span>The Business Case</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">04 — The Business Case</p>
+          <h2 class="h-display h-sm reveal d2">Automate the 80% — keep the one decision that matters.</h2>
+          <div class="statline">
+            <div class="reveal d3"><strong>80%</strong><b>Mechanical work, gone</b><p>Strategy drafting and page building are automated end to end.</p></div>
+            <div class="reveal d4"><strong>Seconds</strong><b>Human stays in control</b><p>Approving the plan is one quick, high-leverage decision.</p></div>
+            <div class="reveal d5"><strong>Agency-grade</strong><b>For SMB budgets</b><p>Strategy a small business could never otherwise afford.</p></div>
+            <div class="reveal d6"><strong>Low risk</strong><b>Nothing ships unapproved</b><p>The approval gate prevents off-brand, runaway output.</p></div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>04 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 6 — The Architecture (diagram, ported from the app, with hover popovers) -->
+    <section class="stage-slide arch-slide" data-rail-title="The Architecture" data-rail-sub="Two agents, one approval gate" data-notes="Multi-agent, human-in-the-loop. /api/plan runs the Strategist; a human gate (the editable Plan Card) sits in the middle; /api/generate runs the Generator. Orchestrated as a LangGraph.js graph, streamed live over Server-Sent Events. Hover any box for details.">
+      <div class="slide-shell arch-shell">
+        <div class="arch-head reveal d1">
+          <h1>PageForge — Architecture</h1>
+          <p>Strategy-first, two-agent landing-page generator · request flow left → right · hover any box for details</p>
+        </div>
+        <div class="arch-svg-wrap reveal d2">
+          <svg id="archsvg" viewBox="0 0 1680 880" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7 — The Strategist (split) -->
+    <section class="stage-slide" data-rail-title="The Strategist" data-rail-sub="Decides, doesn't write" data-notes="The Strategist makes the decisions a brand strategist would: it extracts the basics from a free-text brief, decides strategy before any copy, and returns strict JSON the rest of the app can trust.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">06</span><span>The Strategist</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">06 — The Strategist</p>
+          <h2 class="h-display h-sm reveal d2">It makes the decisions a brand strategist would.</h2>
+          <div class="split">
+            <ul class="bullets reveal d3">
+              <li>Extracts the basics from a free-text brief, then plans.</li>
+              <li>Decides, doesn't write — strategy comes before any copy.</li>
+              <li>Returns strict JSON the rest of the app can trust.</li>
+            </ul>
+            <div class="plan-card reveal d4">
+              <div class="pc-title">Marketing plan</div>
+              <div class="kv">
+                <div><span class="k">positioning</span>: <span class="v">"Neighbourhood specialty-coffee bar"</span></div>
+                <div><span class="k">target_customer</span>: <span class="v">"Remote workers &amp; nearby regulars"</span></div>
+                <div><span class="k">value_proposition</span>: <span class="v">"Single-origin coffee, made unhurried"</span></div>
+                <div><span class="k">tone</span>: <span class="v">"Warm, confident, unpretentious"</span></div>
+                <div><span class="k">conversion_goal</span>: <span class="v">"Get people to visit in person"</span></div>
+                <div><span class="k">key_messages</span>: <span class="v">["Single-origin", "Slow bar", "Local roast"]</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>06 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 8 — The Approval Gate (numbered pillars) -->
+    <section class="stage-slide" data-rail-title="The Approval Gate" data-rail-sub="Approve before anything is built" data-notes="A human approves the thinking before a single line is built. The plan card is editable, nothing auto-ships, and it's cheap to correct the strategy before paying to regenerate pages.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">07</span><span>The Approval Gate</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">07 — The Approval Gate</p>
+          <h2 class="h-display h-sm reveal d2">A human approves the thinking before a single line is built.</h2>
+          <div class="pillars">
+            <div class="pillar reveal d3"><p class="pn">01</p><h3>Editable</h3><p>The plan card is editable, not take-it-or-leave-it — change anything before you build.</p></div>
+            <div class="pillar reveal d4"><p class="pn">02</p><h3>Gated</h3><p>Nothing auto-ships. The Generator runs only after you press Confirm &amp; build.</p></div>
+            <div class="pillar reveal d5"><p class="pn">03</p><h3>Cheap</h3><p>Correct the strategy first; don't pay to regenerate whole pages to fix the thinking.</p></div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>07 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 9 — The Generator (A/B/C/D badge rows) -->
+    <section class="stage-slide" data-rail-title="The Generator" data-rail-sub="Executes the plan" data-notes="The Generator executes the plan and can't change it. Given the approved strategy and the owner's photos, it writes one self-contained, downloadable HTML page: a strict design bar, real photos injected, no dead buttons, one file.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">08</span><span>The Generator</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">08 — The Generator</p>
+          <h2 class="h-display h-sm reveal d2">It executes the plan — it can't change it.</h2>
+          <div class="gen-split">
+          <div class="badge-list">
+            <div class="brow reveal d3"><div class="bg">A</div><div><h3>A strict design bar</h3><p>One color story, real fonts, spacing and hover states — no template look.</p></div></div>
+            <div class="brow reveal d4"><div class="bg">B</div><div><h3>Real photos, injected</h3><p>IMAGE_n tokens are swapped for the owner's base64 images after generation.</p></div></div>
+            <div class="brow reveal d5"><div class="bg">C</div><div><h3>No dead buttons</h3><p>Every CTA resolves to a real maps, mailto or booking link.</p></div></div>
+            <div class="brow reveal d6"><div class="bg">D</div><div><h3>One downloadable file</h3><p>Self-contained HTML you can preview and download.</p></div></div>
+          </div>
+            <div class="gen-output reveal d4">
+              <div class="win">
+                <div class="win-bar"><span></span><span></span><span></span><b>pageforge.com</b></div>
+                <div class="win-body pf-app">
+                  <div class="pf-top"><span class="pf-brand">PageForge</span><span class="pf-theme"></span></div>
+                  <div class="pf-center">
+                    <div class="pf-h">What are we building?</div>
+                    <div class="pf-sub">Describe your business. I'll draft a marketing strategy for your approval, then build the page.</div>
+                    <div class="pf-chips">
+                      <span>A specialty coffee shop in Lisbon…</span>
+                      <span>A boutique pilates studio in Madrid…</span>
+                      <span>A family-run Italian trattoria…</span>
+                      <span>A fintech app for first-time investors…</span>
+                      <span>A bespoke watchmaker…</span>
+                      <span>A boutique accounting firm in London…</span>
+                    </div>
+                  </div>
+                  <div class="pf-composer"><span class="pf-ph">Describe your business and what you want…</span><span class="pf-send"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>08 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 10 — The Model (definition rows) -->
+    <section class="stage-slide" data-rail-title="The Model" data-rail-sub="Gemini 2.5 Flash · one seam" data-notes="Gemini 2.5 Flash powers both agents, behind one provider seam: callModel() targets the Gemini API or Vertex AI with one switch, zero agent changes. Production runs on Vertex AI in europe-west1.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">09</span><span>The Model</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">09 — The Model</p>
+          <h2 class="h-display h-sm reveal d2">Gemini 2.5 Flash, behind one provider seam.</h2>
+          <div class="def-list">
+            <div class="def reveal d3"><div class="term"><span class="dl">Model</span><b>Gemini 2.5 Flash</b></div><p>Powers both agents — fast and low-cost, the demo workhorse.</p></div>
+            <div class="def reveal d4"><div class="term"><span class="dl">Seam</span><b>callModel()</b></div><p>Gemini API or Vertex AI — one switch, zero changes to the agents.</p></div>
+            <div class="def reveal d5"><div class="term"><span class="dl">Platform</span><b>Vertex AI</b></div><p>Production path on the google-genai SDK, region europe-west1.</p></div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>09 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 11 — The Model Strategy (comparison) -->
+    <section class="stage-slide" data-rail-title="The Model Strategy" data-rail-sub="One model, two temperatures" data-notes="One model, two temperatures: 0.6 keeps the Strategist focused and consistent; 0.8 gives the Generator room to be creative. Keys stay server-side; users can bring their own credentials in Settings.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">10</span><span>The Model Strategy</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">10 — The Model Strategy</p>
+          <h2 class="h-display h-sm reveal d2">One model, two temperatures — focused to decide, creative to build.</h2>
+          <div class="compare">
+            <div class="reveal d3"><div class="temp">0.6</div><div class="clabel">Temperature · Strategist</div><h3>Focused</h3><p>Consistent decisions — the strategy shouldn't wander.</p></div>
+            <div class="reveal d4"><div class="temp">0.8</div><div class="clabel">Temperature · Generator</div><h3>Creative</h3><p>Room to be expressive with the page copy and design.</p></div>
+          </div>
+          <div class="band reveal d5"><span><b>Keys stay server-side</b> · users can bring their own credentials via Settings</span></div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>10 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 12 — Real-time & Robust (numbered list) -->
+    <section class="stage-slide" data-rail-title="Real-time & Robust" data-rail-sub="Built to be trusted" data-notes="Built to be trusted, not just to demo: live SSE streaming, typed contracts validated by TypeScript, keys that never leak to the browser, and guardrails everywhere — tolerant parsing, friendly errors, real CTA links.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">11</span><span>Real-time &amp; Robust</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">11 — Real-time &amp; Robust</p>
+          <h2 class="h-display h-sm reveal d2">Built to be trusted, not just to demo.</h2>
+          <div class="num-list">
+            <div class="nrow reveal d3"><div class="nn">01</div><h3>Live streaming</h3><p>Server-Sent Events stream each agent's progress and result to the UI in real time.</p></div>
+            <div class="nrow reveal d4"><div class="nn">02</div><h3>Typed contracts</h3><p>Plan and Strategy types validate every handoff — TypeScript catches misuse before deploy.</p></div>
+            <div class="nrow reveal d5"><div class="nn">03</div><h3>Keys never leak</h3><p>Every model call runs server-side; API keys are never sent to the browser.</p></div>
+            <div class="nrow reveal d6"><div class="nn">04</div><h3>Guardrails everywhere</h3><p>Tolerant credential parsing, friendly errors and real CTA links — no dead or broken pages.</p></div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>11 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 13 — Live & Deployed (tech strip + hero URL) -->
+    <section class="stage-slide" data-rail-title="Live & Deployed" data-rail-sub="Shipped end-to-end" data-notes="Shipped end-to-end and usable now. Next.js 14 (App Router, TS), LangGraph.js orchestration, Vercel auto-deploys on push to main, and Vertex AI inference in europe-west1. Try the live demo.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">12</span><span>Live &amp; Deployed</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">12 — Live &amp; Deployed</p>
+          <h2 class="h-display h-sm reveal d2">Shipped end-to-end — and you can use it now.</h2>
+          <div class="tech-strip">
+            <div class="reveal d3"><span class="tl">App Router · TS</span><b>Next.js 14</b><p>Website and backend in one typed project.</p></div>
+            <div class="reveal d4"><span class="tl">Orchestration</span><b>LangGraph.js</b><p>The two-agent pipeline as an explicit graph.</p></div>
+            <div class="reveal d5"><span class="tl">Deploy</span><b>Vercel</b><p>Auto-deploys on every push to main.</p></div>
+            <div class="reveal d6"><span class="tl">Gemini</span><b>Vertex AI</b><p>Production inference in europe-west1.</p></div>
+          </div>
+          <div class="demo-band reveal d7"><span>Try the live demo</span><a class="live-url" href="https://generative-ai-project-puce.vercel.app" target="_blank" rel="noopener">pageforge.com</a></div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>12 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Slide 14 — What's Next (roadmap + team) -->
+    <section class="stage-slide" data-rail-title="What's Next" data-rail-sub="Roadmap + team" data-notes="What's next: quality evals, more model options, a custom domain. Team: Ricardo Liévano Pedroza, Cecile Tambey, Luka Tcheishvili, Juan José Rincón Briceño, Nicklas Urban, Michael Alexis Concepcion.">
+      <div class="slide-shell">
+        <div class="slide-top">
+          <div class="left"><span class="section-circle">13</span><span>What's Next</span></div>
+          <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
+        </div>
+        <div class="slide-main">
+          <p class="eyebrow head-eyebrow reveal d1">13 — What's Next</p>
+          <h2 class="h-display h-sm reveal d2">Evals, more models, a domain of its own.</h2>
+          <div class="next-grid">
+            <div class="next-item reveal d3"><span class="nx">01</span><h3>Quality evals</h3><p>A small latency + quality metrics table.</p></div>
+            <div class="next-item reveal d4"><span class="nx">02</span><h3>More model options</h3><p>Broaden the in-app model picker.</p></div>
+            <div class="next-item reveal d5"><span class="nx">03</span><h3>Custom domain</h3><p>A production home beyond the Vercel URL.</p></div>
+          </div>
+          <div class="team-block">
+            <p class="team-label reveal d6">The team</p>
+            <div class="team-divider reveal d6"></div>
+            <div class="team-row">
+              <div class="tperson reveal d6"><span class="avatar">RL</span><b>Ricardo Liévano Pedroza</b></div>
+              <div class="tperson reveal d6"><span class="avatar">CT</span><b>Cecile Tambey</b></div>
+              <div class="tperson reveal d7"><span class="avatar">LT</span><b>Luka Tcheishvili</b></div>
+              <div class="tperson reveal d7"><span class="avatar">JR</span><b>Juan José Rincón Briceño</b></div>
+              <div class="tperson reveal d8"><span class="avatar">NU</span><b>Nicklas Urban</b></div>
+              <div class="tperson reveal d8"><span class="avatar">MC</span><b>Michael Alexis Concepcion</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>13 / 14</span></div>
+      </div>
+    </section>
+
+    <!-- Left rail -->
+    <aside class="deck-rail" id="rail">
+      <div class="deck-rail-head">
+        <div class="deck-rail-kicker">Generative AI</div>
+        <div class="deck-rail-title">PageForge</div>
+        <div class="deck-rail-sub">Two-Agent GenAI · 14 slides</div>
+      </div>
+      <div class="deck-rail-list" id="rail-list"></div>
+      <div class="rail-counter"><span id="rail-counter-cur">01</span><span id="rail-counter-total">/ 14</span></div>
+    </aside>
+  </div>
+
+  <!-- Controls -->
+  <button id="rail-toggle" title="Slides (S)" aria-label="Toggle slide list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <button id="fs-toggle" title="Fullscreen (F)" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button>
+  <button id="theme-toggle" title="Theme (T)" aria-label="Toggle theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <button id="notes-toggle" title="Speaker notes (N)" aria-label="Toggle notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 10h16M4 15h10"/></svg></button>
+
+  <button id="nav-prev" title="Previous (←)" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button id="nav-next" title="Next (→)" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+
+  <div class="notes-panel" id="notes"><h2>Speaker notes</h2><p id="notes-body"></p></div>
+  <div class="deck-progress"><span id="progress"></span></div>
+
+  <!-- Figma-style custom cursor (same as the app) -->
+  <div class="custom-cursor" id="custom-cursor" aria-hidden="true">
+    <svg width="23" height="32" viewBox="0 0 12.5 17.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z" fill="white" stroke="#1a1a1a" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var slides = Array.prototype.slice.call(document.querySelectorAll('.stage-slide'));
+      var total = slides.length;
+      var idx = 0;
+
+      // Detailed speaker notes (one per slide, in order).
+      var NOTES = [
+        "Welcome — this is PageForge, our Generative AI final project. The one-line pitch: describe your business in a sentence and get back a finished, downloadable landing page — but with the marketing strategy decided first and approved by a human before anything is built. The differentiator to plant early: generic AI builders jump straight to generating a page; we deliberately split the job into 'decide' and 'build', with a human checkpoint between them. It's live and usable right now at pageforge.com, running on Google Gemini behind a swappable provider seam. Over the next slides we'll cover the problem, the product, the experience, the architecture, the two agents, and how it's deployed.",
+        "The problem: small and medium businesses need a web presence but can't afford a strategist or an agency, so they reach for generic AI site builders — which hand them a page with no strategy behind it. Three concrete failures. First, no strategy: these tools skip positioning, target audience and the conversion goal, the decisions that actually make a page convert. Second, templated output: one prompt told to 'make a website' defaults to stock copy and the same rainbow-gradient sameness. Third, no control: the owner never approves the thinking — the AI commits before anyone signs off. PageForge is built to fix exactly these three.",
+        "Our answer is a strategy-first generator. Instead of one prompt doing everything at once, PageForge makes the marketing decisions first, lets a human approve them, and only then builds the page. From the user's side it's simple: describe your business in a sentence, a Strategist plans, you approve, a Generator builds — and you get a single downloadable HTML page. The thing to stress is the ordering: decide, approve, build. That sequence is what separates us from every 'type a prompt, get a page' tool.",
+        "Here's what the user actually does — we call it Plan Mode, four steps. One: describe your business in plain language, no forms or jargon. Two: the Strategist drafts a marketing plan and shows it to you. Three: you review and edit that plan, then confirm — this is the human gate, and nothing is generated until you press confirm. Four: the Generator turns the approved plan plus your photos into the finished page. The point to land: step three is the trust mechanism — the human keeps control of the one decision that matters.",
+        "Why this matters commercially. The 80% of the work that's mechanical — drafting the strategy and building the page — is automated end to end. What stays human is the one high-leverage decision: approving the plan, which takes seconds. The result is agency-grade strategy at a price an SMB could actually afford — strategy they'd otherwise never get. And it's low risk: because nothing ships until it's approved, you avoid off-brand or runaway output. So: automate the 80%, keep the one decision that matters, and de-risk the result.",
+        "This is the system end to end — multi-agent with a human-in-the-loop gate; in the live deck you can hover any box for details. Flow left to right: the browser (chat UI, history & settings, photo upload) talks to the Next.js app on Vercel, which exposes two API routes. /api/plan runs the Strategist; the plan goes to the human gate — the editable Plan Card — and only after you confirm does /api/generate run the Generator. Both agents call the model through one provider seam (lib/llm.ts) targeting either the Gemini API or Vertex AI. The whole pipeline is expressed as a LangGraph.js graph, and every step streams its progress live to the UI over Server-Sent Events.",
+        "The Strategist is the first agent — it makes the decisions a brand strategist would. It reads the owner's free-text brief, extracts the business basics, then plans: positioning, target customer, value proposition, tone, conversion goal and key messages. Crucially it decides, it doesn't write — strategy comes before any page copy. And it returns strict JSON, so the rest of the app can trust and validate the handoff. Point at the example plan on the right to make it concrete.",
+        "This is the human-in-the-loop gate, and it's the heart of the 'safe' story. A human approves the thinking before a single line of the page is built. Three properties: it's editable — the plan card is a real form, not take-it-or-leave-it, so you can change anything; it's gated — the Generator only runs after you press Confirm & build, so nothing auto-ships; and it's cheap — you correct the strategy here, before paying to regenerate whole pages to fix the thinking. This is what prevents wasted time and off-brand output.",
+        "The Generator is the second agent — it executes the approved plan and, importantly, it can't change it. Given the strategy and the owner's photos, it writes one self-contained, downloadable HTML page. Four guardrails: a strict design bar (one color story, real fonts, spacing, hover states — no template look); real photos injected via IMAGE_n tokens swapped for the owner's base64 images; no dead buttons — every CTA resolves to a real maps, mailto or booking link; and one downloadable file you can preview and download. The window on the right shows the actual product UI.",
+        "On the model: both agents run on Google Gemini 2.5 Flash — fast and low-cost, which keeps the demo responsive. Everything goes through one provider seam, the callModel() function, so we can switch between the Gemini API and Vertex AI with one setting and zero changes to the agents. In production we run on Vertex AI via the google-genai SDK in europe-west1. The talking point: this seam is what makes the whole thing model- and provider-agnostic.",
+        "One model, but two temperatures — tuned to the job. The Strategist runs at 0.6: focused and consistent, because the strategy shouldn't wander. The Generator runs at 0.8: more room to be creative with the page copy and design. Same model, different settings per agent. And on security: API keys always stay server-side, never reaching the browser, and users can bring their own credentials through the in-app Settings panel.",
+        "We built this to be trusted, not just to demo. Four things. Live streaming: Server-Sent Events push each agent's progress and result to the UI in real time, so the user always sees what's happening. Typed contracts: the Plan and Strategy types validate every handoff, and TypeScript catches misuse before we deploy. Keys never leak: every model call runs server-side. And guardrails everywhere: tolerant credential parsing, friendly error messages, and real CTA links — so there are no dead or broken pages.",
+        "This isn't a prototype — it's shipped end to end and you can use it now. The stack: Next.js 14 with the App Router and TypeScript, so the website and backend live in one typed project; LangGraph.js for the two-agent orchestration; Vercel for hosting, auto-deploying on every push to main; and Vertex AI for production inference in europe-west1. Invite the audience to try the live demo at pageforge.com — ideally do a quick live run here.",
+        "Where we'd take it next: first, quality evals — a small latency and quality metrics table to measure output objectively. Second, more model options in the in-app picker, so users can trade speed for quality. Third, a custom domain to give it a production home beyond the Vercel URL. Close by thanking the audience and introducing the team — Ricardo, Cecile, Luka, Juan José, Nicklas and Michael — then open it up for questions."
+      ];
+
+      try { var t = localStorage.getItem('pf-deck-theme'); if (t) root.setAttribute('data-theme', t); } catch (e) {}
+
+      function fit() {
+        var vw = window.innerWidth, vh = window.innerHeight;
+        var scale = Math.min(vw / 1920, vh / 1080);
+        root.style.setProperty('--stage-scale', scale);
+        root.style.setProperty('--stage-x', ((vw - 1920 * scale) / 2) + 'px');
+        root.style.setProperty('--stage-y', ((vh - 1080 * scale) / 2) + 'px');
+      }
+
+      var railList = document.getElementById('rail-list');
+      var railButtons = [];
+      slides.forEach(function (s, i) {
+        var b = document.createElement('button');
+        b.className = 'deck-rail-button';
+        b.innerHTML = '<small>' + String(i + 1).padStart(2, '0') + '</small><span>' +
+          (s.getAttribute('data-rail-title') || ('Slide ' + (i + 1))) + '</span>';
+        b.addEventListener('click', function () { go(i); });
+        railList.appendChild(b);
+        railButtons.push(b);
+      });
+      document.getElementById('rail-counter-total').textContent = '/ ' + String(total).padStart(2, '0');
+
+      var notesBody = document.getElementById('notes-body');
+
+      function restartReveals(slide) {
+        var els = slide.querySelectorAll('.reveal');
+        for (var i = 0; i < els.length; i++) els[i].style.animation = 'none';
+        void slide.offsetWidth;
+        for (var j = 0; j < els.length; j++) els[j].style.animation = '';
+      }
+
+      function render() {
+        slides.forEach(function (s, i) { s.classList.toggle('active', i === idx); });
+        railButtons.forEach(function (b, i) { b.classList.toggle('active', i === idx); });
+        document.getElementById('rail-counter-cur').textContent = String(idx + 1).padStart(2, '0');
+        document.getElementById('progress').style.width = ((idx + 1) / total * 100) + '%';
+        notesBody.textContent = NOTES[idx] || slides[idx].getAttribute('data-notes') || 'No notes for this slide.';
+        restartReveals(slides[idx]);
+      }
+
+      function go(n) { idx = Math.max(0, Math.min(total - 1, n)); render(); }
+      function next() { go(idx + 1); }
+      function prev() { go(idx - 1); }
+      function toggleRail() { document.body.classList.toggle('rail-open'); }
+
+      document.getElementById('nav-next').addEventListener('click', next);
+      document.getElementById('nav-prev').addEventListener('click', prev);
+      document.getElementById('rail-toggle').addEventListener('click', toggleRail);
+      document.getElementById('fs-toggle').addEventListener('click', function () {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+      });
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        var nx = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        root.setAttribute('data-theme', nx);
+        try { localStorage.setItem('pf-deck-theme', nx); } catch (e) {}
+      });
+      document.getElementById('notes-toggle').addEventListener('click', function () {
+        document.getElementById('notes').classList.toggle('open');
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+        else if (e.key === 'Home') { go(0); }
+        else if (e.key === 'End') { go(total - 1); }
+        else if (e.key === 's' || e.key === 'S') { toggleRail(); }
+        else if (e.key === 'f' || e.key === 'F') { document.getElementById('fs-toggle').click(); }
+        else if (e.key === 't' || e.key === 'T') { document.getElementById('theme-toggle').click(); }
+        else if (e.key === 'n' || e.key === 'N') { document.getElementById('notes').classList.toggle('open'); }
+      });
+
+      window.addEventListener('resize', fit);
+      fit();
+      render();
+    })();
+
+    // Architecture slide — exact diagram transposed to horizontal + hover popovers, ported from the app.
+    (function () {
+      var svg = document.getElementById('archsvg');
+      if (!svg) return;
+      var INS = {
+        chat: { t: "Chat UI",
+          w: "It's the single screen a non-technical owner works with, so the whole product has to be simple and guided. Everything the user does flows from here.",
+          a: "Lets you describe your business in plain words, review and edit the AI's marketing plan, watch live progress, and preview or download the finished landing page.",
+          i: "Your typed or spoken description, your edits to the plan, the photos you attach, and your clicks.",
+          o: "Sends those requests to the backend and shows what comes back — the marketing plan and the final page." },
+        hist: { t: "History & Settings",
+          w: "So your past pages and your own API keys are remembered between visits without needing any account or login.",
+          a: "Saves every generated page and your credential settings directly in the browser (localStorage). Click a past chat to reopen it.",
+          i: "The conversations you create and the credentials you enter in the Settings panel.",
+          o: "Reloads a previous page on demand, and supplies your saved credentials to each request." },
+        photo: { t: "Photo upload",
+          w: "Real photos make the generated page look like an actual brand instead of a generic stock template — a big quality difference.",
+          a: "Lets you attach your own images. Each one is shrunk in the browser and turned into text (base64) so it can be embedded directly inside the single HTML file.",
+          i: "The image files you upload (you're asked for at least 3).",
+          o: "Compact base64 images that the Generator places into the landing page." },
+        front: { t: "Frontend",
+          w: "This is the web app every visitor loads — it draws the whole interface and is the bridge between the user and the AI backend.",
+          a: "A Next.js page (page.tsx) that renders the chat UI and streams the agents' results back to the screen in real time.",
+          i: "User actions from the Chat UI (the brief, the approval, the photos).",
+          o: "Calls to the two API routes (/api/plan, /api/generate) and live on-screen updates as results stream in." },
+        plan: { t: "/api/plan",
+          w: "It keeps the AI 'thinking' step on the server, where the secret API keys live safely and can never reach the browser.",
+          a: "A small backend endpoint (serverless) that runs the Strategist agent and streams its progress and result back live.",
+          i: "Your business brief, the model you picked, and any credentials.",
+          o: "A structured marketing plan (as data), streamed back to the UI for you to approve." },
+        gen: { t: "/api/generate",
+          w: "Building the page is kept separate from planning it, so each step stays simple, testable, and safe.",
+          a: "A second backend endpoint (serverless) that runs the Generator agent and streams the finished page back.",
+          i: "The plan you approved plus your photos.",
+          o: "A complete, self-contained HTML landing page, streamed back to the browser." },
+        strat: { t: "Strategist",
+          w: "Most AI page builders skip strategy and produce generic copy. Forcing a dedicated 'decisions first' agent is what makes this project genuinely useful.",
+          a: "An AI agent (a Gemini prompt) that acts like a brand strategist: it decides positioning, target audience, tone, value proposition, and key messages — before any page is written.",
+          i: "Your free-text description of the business and what you want.",
+          o: "A structured marketing plan (strict JSON) that the app shows you to review." },
+        appr: { t: "Human approval",
+          w: "A human checks and can edit the plan before anything is built. This 'human-in-the-loop' gate prevents wasted time and off-brand output.",
+          a: "A review step in the UI: the plan appears as an editable card, and nothing is generated until you click 'Confirm & build'.",
+          i: "The Strategist's proposed plan.",
+          o: "An approved — and possibly edited — plan, ready for the Generator." },
+        gener: { t: "Generator",
+          w: "It turns the approved strategy into something real and usable: an actual, styled web page the owner can publish.",
+          a: "An AI agent (a Gemini prompt) that acts like a boutique web designer and writes a full, single-file, styled HTML page that executes the strategy precisely.",
+          i: "The approved plan and your photos.",
+          o: "A complete HTML landing page you can preview, open full-size, and download." },
+        seam: { t: "Provider seam",
+          w: "It lets the whole app run on different AI providers without changing any other code — a key piece of technical flexibility.",
+          a: "A single function (callModel) that every AI request goes through. It routes the request to either the Gemini API or Vertex AI based on one setting.",
+          i: "A prompt, the chosen model, and which provider/credentials to use.",
+          o: "The model's text response, from whichever provider is currently selected." },
+        gemapi: { t: "Gemini API",
+          w: "The quickest, easiest way to run the app — anyone can get a free key and start generating.",
+          a: "Google's hosted Gemini service, accessed with a single API key.",
+          i: "Prompts plus a Gemini API key (the app's, or your own from Settings).",
+          o: "Generated text — the marketing plan, or the HTML page." },
+        vertex: { t: "Vertex AI",
+          w: "The enterprise-grade option: it runs on your own Google Cloud project with proper service-account security and region control.",
+          a: "Google Cloud's Vertex AI, accessed with a service-account credential and a chosen region.",
+          i: "Prompts plus your Cloud project ID, region, and service-account credentials.",
+          o: "Generated text — the marketing plan, or the HTML page." },
+        flash: { t: "Google Gemini Models",
+          w: "This is the actual 'brain' — the model that writes both the strategy and the page.",
+          a: "Google's Gemini 2.5 Flash model. It's fast and cheap, which keeps the demo responsive. Temperature is lower for the Strategist (focused) and higher for the Generator (creative).",
+          i: "The carefully written prompts sent by the Strategist and Generator agents.",
+          o: "The marketing-plan JSON and the finished HTML landing page." }
+      };
+      function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+      function row(l, x){ return '<div class="pr"><span>' + l + '</span><p>' + esc(x) + '</p></div>'; }
+
+      // ---- geometry: the app's vertical layers become left->right columns ----
+      var colLeft=[20,356,692,1028,1364], Wc=250, Wb=214, Hb=72, rowCy=[201,446,691];
+      var sch={cli:['#10243f','#3b82c4'],ver:['#1b2230','#647389'],agt:['#211a3a','#7c5cff'],prv:['#2a2208','#d4940f'],llm:['#0e2417','#36a35b']};
+      var BOX={
+        chat:{c:0,r:0,s:'cli',t:'Chat UI',sub:'composer · plan card · preview'},
+        hist:{c:0,r:1,s:'cli',t:'History & Settings',sub:'stored in localStorage'},
+        photo:{c:0,r:2,s:'cli',t:'Photo upload',sub:'resized to base64'},
+        plan:{c:1,r:0,s:'ver',t:'/api/plan',sub:'Strategist route · SSE'},
+        front:{c:1,r:1,s:'ver',t:'Frontend',sub:'page.tsx · SSR + UI'},
+        gen:{c:1,r:2,s:'ver',t:'/api/generate',sub:'Generator route · SSE'},
+        strat:{c:2,r:0,s:'agt',t:'Strategist',sub:'brief → marketing plan'},
+        appr:{c:2,r:1,s:'agt',t:'Human approval',sub:'edit & confirm the plan'},
+        gener:{c:2,r:2,s:'agt',t:'Generator',sub:'plan + photos → HTML'},
+        seam:{c:3,r:1,s:'prv',t:'Provider seam',sub:'gemini | vertex · per-request creds'},
+        gemapi:{c:4,r:0,s:'llm',t:'Gemini API',sub:'API key'},
+        flash:{c:4,r:1,s:'llm',t:'Google Gemini Models',sub:'Strategist 0.6 · Generator 0.8'},
+        vertex:{c:4,r:2,s:'llm',t:'Vertex AI',sub:'service account · region'}
+      };
+      Object.keys(BOX).forEach(function(k){var b=BOX[k];b.x=colLeft[b.c]+18;b.cy=rowCy[b.r];b.y=b.cy-Hb/2;b.cx=b.x+Wb/2;b.right=b.x+Wb;b.left=b.x;b.top=b.y;b.bottom=b.y+Hb;});
+      var LAYERS=[{c:0,l:'Client · Browser',col:'#2f6fb0'},{c:1,l:'Vercel · Next.js',col:'#475569'},{c:2,l:'Agents · LangGraph',col:'#6b54c9'},{c:3,l:'Provider seam',col:'#b07d12'},{c:4,l:'LLM · Google',col:'#2f8f55'}];
+      var EDGES=[['chat','front','brief · approve','h'],['hist','front','creds','h'],['photo','front','photos','h'],['front','plan','POST','v'],['front','gen','POST','v'],['plan','strat','run','h'],['gen','gener','run','h'],['strat','appr','plan','v'],['appr','gener','approved','v'],['strat','seam','callModel()','h'],['gener','seam','callModel()','h'],['seam','gemapi','','h'],['seam','vertex','','h'],['gemapi','flash','','v'],['vertex','flash','','v']];
+
+      function elbowH(s,t){var sx=s.right,sy=s.cy,tx=t.left,ty=t.cy,m=(sx+tx)/2,r=8;
+        if(Math.abs(sy-ty)<1)return 'M'+sx+' '+sy+'L'+tx+' '+ty;
+        var d=ty>sy?1:-1;
+        return 'M'+sx+' '+sy+'L'+(m-r)+' '+sy+'Q'+m+' '+sy+' '+m+' '+(sy+d*r)+'L'+m+' '+(ty-d*r)+'Q'+m+' '+ty+' '+(m+r)+' '+ty+'L'+tx+' '+ty;}
+
+      var p=[];
+      p.push('<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#667085"/></marker></defs>');
+      LAYERS.forEach(function(L){var x=colLeft[L.c];
+        p.push('<rect x="'+x+'" y="120" width="'+Wc+'" height="700" rx="16" fill="#ffffff" stroke="#d0d5dd" stroke-width="1.5"/>');
+        p.push('<text x="'+(x+6)+'" y="108" font-size="13" font-weight="700" letter-spacing="1.4" fill="'+L.col+'">'+esc(L.l.toUpperCase())+'</text>');
+      });
+      EDGES.forEach(function(e){var s=BOX[e[0]],t=BOX[e[1]],lab=e[2],kind=e[3],d,lx,ly;
+        if(kind==='h'){d=elbowH(s,t);lx=(s.right+t.left)/2;ly=s.cy-9;}
+        else{var cx=s.cx,sy,ty;if(t.r<s.r){sy=s.top;ty=t.bottom;}else{sy=s.bottom;ty=t.top;}d='M'+cx+' '+sy+'L'+cx+' '+ty;lx=cx+16;ly=(sy+ty)/2;}
+        p.push('<path d="'+d+'" fill="none" stroke="#667085" stroke-width="2" marker-end="url(#ah)"/>');
+        if(lab){var w=lab.length*6+12;p.push('<rect x="'+(lx-w/2)+'" y="'+(ly-9)+'" width="'+w+'" height="17" rx="4" fill="#f4f4f5"/>');p.push('<text x="'+lx+'" y="'+(ly+3.5)+'" font-size="11" fill="#475569" text-anchor="middle">'+esc(lab)+'</text>');}
+      });
+      Object.keys(BOX).forEach(function(k){var b=BOX[k],c=sch[b.s];
+        p.push('<g class="absvg" data-key="'+k+'">'
+          +'<rect x="'+b.x+'" y="'+b.y+'" width="'+Wb+'" height="'+Hb+'" rx="11" fill="'+c[0]+'" stroke="'+c[1]+'" stroke-width="2"/>'
+          +'<text x="'+b.cx+'" y="'+(b.cy-2)+'" text-anchor="middle" font-size="17" font-weight="600" fill="#eef3f8" style="font-family:var(--font-display)">'+esc(b.t)+'</text>'
+          +'<text x="'+b.cx+'" y="'+(b.cy+17)+'" text-anchor="middle" font-size="11" fill="#aebccb">'+esc(b.sub)+'</text>'
+          +'</g>');
+      });
+      p.push('<foreignObject id="archfo" x="0" y="0" width="400" height="360" style="display:none;overflow:visible"><div xmlns="http://www.w3.org/1999/xhtml" class="arch-tip" id="archtip"></div></foreignObject>');
+      svg.innerHTML = p.join('');
+
+      var fo=document.getElementById('archfo'), tip=document.getElementById('archtip');
+      svg.querySelectorAll('.absvg').forEach(function(g){
+        g.addEventListener('mouseenter',function(){
+          var d=INS[g.getAttribute('data-key')]; if(!d) return;
+          tip.innerHTML='<div class="pt">'+esc(d.t)+'</div>'+row("Why it's here",d.w)+row('What it does',d.a)+row('Input',d.i)+row('Output',d.o);
+          var b=BOX[g.getAttribute('data-key')], W=400, gap=18, pad=12;
+          fo.setAttribute('width',W); fo.setAttribute('height',420); fo.style.display='block';
+          var H=tip.offsetHeight||330;
+          var x=b.right+gap; if(x+W>1680-pad) x=b.left-W-gap; if(x<pad) x=pad;
+          var y=b.cy-H/2; if(y+H>868) y=868-H; if(y<12) y=12;
+          fo.setAttribute('x',x); fo.setAttribute('y',y); fo.setAttribute('height',H+6);
+        });
+        g.addEventListener('mouseleave',function(){ fo.style.display='none'; });
+      });
+    })();
+
+    // Figma-style custom cursor — same logic as the app's CustomCursor component.
+    (function () {
+      var el = document.getElementById('custom-cursor');
+      if (!el) return;
+      // Skip on touch / coarse-pointer devices (no real cursor there).
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      document.documentElement.classList.add('cursor-on');
+      var shown = false;
+      function show(){ if (!shown){ shown = true; el.style.opacity = '1'; } }
+      function hide(){ if (shown){ shown = false; el.style.opacity = '0'; } }
+      function onMove(e){
+        // SVG tip sits ~1px right / ~2px down from the box origin — offset so it lines up.
+        el.style.transform = 'translate(' + (e.clientX - 1) + 'px,' + (e.clientY - 2) + 'px)';
+        show();
+      }
+      function onWindowLeave(e){ if (!e.relatedTarget) hide(); }
+      window.addEventListener('mousemove', onMove, { passive: true });
+      document.addEventListener('mouseout', onWindowLeave);
+      window.addEventListener('blur', hide);
+      document.addEventListener('mouseenter', show);
+    })();
+  </script>
+</body>
+</html>
