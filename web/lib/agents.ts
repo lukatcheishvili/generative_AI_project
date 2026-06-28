@@ -10,6 +10,11 @@
  */
 
 import { callModel, type Credentials } from "./llm";
+import {
+  framerCatalogForPrompt,
+  framerPromptBlock,
+  resolveFramerId,
+} from "./framers";
 import type { Plan, Shop, Strategy } from "./types";
 
 // --------------------------------------------------------------------------- //
@@ -107,6 +112,11 @@ For "goal", choose the single closest option from this list:
 - "Sign up / subscribe"
 - "Book a consultation / appointment"
 
+For "design_system", pick the SINGLE framer whose vibe best fits this business
+and tone from the list below. Match on industry and feel, not just keywords.
+If none clearly fits, leave it as an empty string "" and one will be chosen for you.
+${framerCatalogForPrompt()}
+
 Return ONLY a JSON object, no markdown:
 {
   "business": {
@@ -123,9 +133,21 @@ Return ONLY a JSON object, no markdown:
     "tone": "3-4 adjectives describing the voice",
     "conversion_goal": "the ONE action the page should drive",
     "key_messages": ["3 supporting points the page should make"]
-  }
+  },
+  "design_system": "one framer id from the list above, or empty string if unsure"
 }`;
-  return parseJson(await callModel(prompt, 0.6, model, creds)) as Plan;
+  const parsed = parseJson(await callModel(prompt, 0.6, model, creds)) as {
+    business: Shop;
+    strategy: Strategy;
+    design_system?: string;
+  };
+  // Honour the model's pick when it names a real framer; otherwise choose
+  // randomly (web/AGENT.md §8 — "if it can't identify the pattern, go random").
+  return {
+    business: parsed.business,
+    strategy: parsed.strategy,
+    framerId: resolveFramerId(parsed.design_system),
+  };
 }
 
 // --------------------------------------------------------------------------- //
@@ -140,16 +162,22 @@ export async function runGenerator(
   const shop = plan.business;
   const strategy: Strategy = plan.strategy;
   const ctaLink = ctaLinkFor(shop);
+  // The framer dictates the look; fall back to a random valid one for older
+  // plans that predate framer selection.
+  const designSystem = framerPromptBlock(resolveFramerId(plan.framerId));
   const prompt = `You are a senior designer at a boutique branding studio — the
 kind hired by independent businesses who want to look like a real brand, not a
 template. Build a complete, single-file HTML landing page for this business,
-executing the marketing strategy below precisely.
+executing the marketing strategy below precisely and in the exact design system
+provided.
 
 BUSINESS: ${shop.name} — ${shop.businessType} in ${shop.location}
 STRATEGY:
 ${JSON.stringify(strategy, null, 2)}
 
 CTA_LINK (use this exact URL, do not invent your own): ${ctaLink}
+
+${designSystem}
 
 ${imagesBlock(images)}
 
@@ -169,19 +197,19 @@ STRUCTURE (in order):
 6. Footer: address/neighbourhood, a final CTA button, minimal links.
 
 DESIGN BAR (the part most AI pages get wrong — fix it):
-- Pick ONE deliberate color story from the brand's tone (a calm dominant tone +
-  one accent), not a rainbow gradient. Use the accent sparingly.
-- Pair a distinctive display serif or slab for headlines with a clean sans for
-  body (load via Google Fonts <link>). No default system-font look.
-- Consistent 8px-based spacing scale and generous whitespace.
-- Buttons: one consistent style, rounded, with a visible hover state.
-- Subtle details only: soft shadows, thin borders, rounded corners. No neon, no
-  more than one gradient on the whole page.
+- Execute the DESIGN SYSTEM above faithfully: its exact fonts, hex colors, type
+  scale, radius and signature patterns are the brief, not a suggestion. Do not
+  invent a different palette or font pairing.
+- Use the accent color sparingly, exactly as the framer prescribes.
+- Keep a consistent 8px-based spacing scale and generous whitespace.
+- Buttons: one consistent style per the framer, with a visible hover state.
 - Mobile-friendly: stack columns under ~700px.
 
 RULES:
 - ONE self-contained HTML file. All CSS in a <style> tag. No external JS
-  frameworks. Google Fonts <link> is allowed.
+  frameworks. Load any freely-available framer fonts via a Google Fonts <link>;
+  keep the exact font-family names from the DESIGN SYSTEM (proprietary brand
+  fonts will fall back to the chain provided — never substitute a different font).
 - EVERY CTA button (nav, hero, footer) must be a real anchor pointing at
   ${ctaLink}, styled as a button. Never use href="#".
 - Follow AVAILABLE PHOTOS above for IMAGE_n tokens vs. gradients.

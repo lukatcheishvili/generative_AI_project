@@ -245,7 +245,7 @@ export default function ArchitectureDiagram() {
       {hb && ins && pos && (
         <foreignObject x={pos.tx} y={pos.ty} width={pos.W} height={pos.H} style={{ pointerEvents: "none" }}>
           <div className="arch-tip">
-            <div className="arch-tip-title" style={{ color: hb.stroke }}>{hb.title}</div>
+            <div className="arch-tip-title">{hb.title}</div>
             <div className="arch-tip-row">
               <span>Why it&apos;s here</span>
               <p>{ins.why}</p>

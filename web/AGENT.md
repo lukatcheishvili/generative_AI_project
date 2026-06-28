@@ -46,13 +46,14 @@ app/
   page.tsx                the chat UI: composer, plan card, result canvas
   globals.css             the design tokens (this doc, in CSS) + base styles
   api/plan/route.ts       Strategist -> plan (SSE)
-  api/build/route.ts      Generator  -> html (SSE)
+  api/generate/route.ts   Generator  -> html (SSE)
 components/
   ThemeToggle.tsx         light/dark switch (top-right)
 lib/
   types.ts                Shop / Strategy / Plan types, MODELS, business goals
   llm.ts                  provider seam: gemini | vertex, per-request model
   agents.ts               runStrategist (brief->plan), runGenerator (plan->html)
+  framers.ts              the design-system catalog for GENERATED pages (§8)
   graph.ts                LangGraph.js view of the strategist->generator pipeline
 ```
 
@@ -190,3 +191,58 @@ accepts a per-request model on both the Gemini API and Vertex paths.
 - Don't add bouncy/elaborate motion — keep it Apple-calm.
 - Don't bypass Plan Mode (no "submit → immediately generate").
 - Don't read provider keys on the client; all model calls are server-side.
+
+---
+
+## 8. Framers — design systems for GENERATED pages
+
+> Scope: this section is about the **landing pages the Generator produces**, NOT
+> the PageForge app chrome (that stays Apple, §2–§5). A "framer" is one
+> self-contained look the output page is built in.
+
+The catalog lives in [`lib/framers.ts`](lib/framers.ts) as structured data the
+agent reads at runtime — colors, fonts, type scale, radius, spacing and the
+*signature patterns* that make a page unmistakably that brand. Specs are
+distilled from VoltAgent's `awesome-design-md`
+(github.com/VoltAgent/awesome-design-md, `design-md/<brand>/DESIGN.md`).
+
+### The catalog (5 distinct looks)
+
+| id | name | feel | best for |
+|---|---|---|---|
+| `ferrari` | Ferrari | cinematic near-black luxury, one racing red | luxury, automotive, fine dining, jewelry, premium |
+| `mastercard` | Mastercard | warm cream editorial, pill shapes, orbital circles | payments, finance, corporate/B2B, professional services |
+| `kraken` | Kraken | clean white crypto exchange, commanded by purple | crypto/fintech, exchanges, B2B SaaS, tech, data-driven |
+| `vodafone` | Vodafone | huge uppercase display over photos, scarlet CTA | telecom, big consumer/retail, services, events, bold |
+| `spotify` | Spotify | immersive near-black, content-first, one green accent | music/audio, entertainment, media, creative, nightlife, apps |
+
+### Selection logic (prompt-driven, random fallback)
+
+1. **Strategist picks it** — `runStrategist` ([`lib/agents.ts`](lib/agents.ts))
+   shows the model the catalog (`framerCatalogForPrompt()`) and asks it to choose
+   one `design_system` id that matches the business + tone, or `""` if unsure.
+2. **Random fallback** — `resolveFramerId()` keeps the model's pick **only if it
+   names a real framer**; otherwise it returns a random valid id. So an empty /
+   unknown / hallucinated value always degrades to a random framer, never breaks.
+   The result is stored as `Plan.framerId`.
+3. **Human override** — the Plan card exposes a "Design style" `<select>`
+   ([`app/page.tsx`](app/page.tsx)) so the user can change the framer before
+   building. Legacy saved plans without a `framerId` are normalised on load.
+4. **Generator applies it** — `runGenerator` injects `framerPromptBlock(framerId)`
+   into the prompt as a hard DESIGN SYSTEM spec; the generic "pick your own
+   colors/fonts" guidance was removed so the framer is the single source of truth.
+
+### Fonts
+
+Brand font-family names are kept **verbatim** as the primary family, each with a
+graceful fallback chain. Proprietary faces (FerrariSans, MarkForMC, Kraken-Brand,
+Vodafone, SpotifyMixUI, …) simply fall back — they are **never** swapped for a
+different font. Where a face is free (Sofia Sans for `mastercard`, IBM Plex Sans
+for `kraken`) the page loads it via a Google Fonts `<link>`.
+
+### Adding / editing a framer
+
+Append a `Framer` object to `FRAMERS` in `lib/framers.ts` (copy tokens from the
+matching `design-md/<brand>/DESIGN.md`). Set a sharp `bestFor` — that string is
+what the Strategist matches on. No other change is needed: the picker, selection
+and generator prompt all read the catalog.

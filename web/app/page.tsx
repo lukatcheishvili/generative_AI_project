@@ -24,7 +24,7 @@
  * component = all the React state, the handlers, and the JSX layout.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import ArchitectureDiagram from "@/components/ArchitectureDiagram";
 import {
@@ -35,6 +35,7 @@ import {
   type Shop,
   type Strategy,
 } from "@/lib/types";
+import { FRAMERS, getFramer, resolveFramerId } from "@/lib/framers";
 
 type Phase = "idle" | "planning" | "plan" | "building" | "done";
 
@@ -182,6 +183,8 @@ function strategyToMarkdown(plan: Plan): string {
     "",
     `**Conversion goal:** ${s.conversion_goal}`,
     "",
+    `**Design style:** ${getFramer(plan.framerId)?.name ?? plan.framerId}`,
+    "",
     "**Key messages:**",
     "",
     ...s.key_messages.map((m) => `- ${m}`),
@@ -260,6 +263,15 @@ export default function Home() {
   const voiceBaseRef = useRef("");
   const modelRef = useRef<HTMLDivElement>(null);
 
+  // Auto-grow the composer to fit its content (up to the CSS max-height), so a
+  // second line never triggers the native scrollbar / its up-down arrow buttons.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [brief]);
+
   // Load history + sidebar preference on mount.
   useEffect(() => {
     try {
@@ -336,6 +348,9 @@ export default function Home() {
   function updateStrategy<K extends keyof Strategy>(key: K, value: Strategy[K]) {
     setPlan((p) => (p ? { ...p, strategy: { ...p.strategy, [key]: value } } : p));
   }
+  function updateFramer(id: string) {
+    setPlan((p) => (p ? { ...p, framerId: id } : p));
+  }
 
   function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
     setSettings((s) => ({ ...s, [key]: value }));
@@ -384,7 +399,9 @@ export default function Home() {
     setCurrentId(c.id);
     setSubmittedBrief(c.brief);
     setBrief("");
-    setPlan(c.plan);
+    // Older saved plans predate framer selection — give them a valid one so the
+    // picker stays controlled.
+    setPlan(c.plan ? { ...c.plan, framerId: resolveFramerId(c.plan.framerId) } : c.plan);
     setHtml(c.html);
     setModel(c.model);
     setSteps([]);
@@ -998,6 +1015,21 @@ export default function Home() {
                       {BUSINESS_GOALS.map((g) => (
                         <option key={g} value={g}>
                           {g}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field full">
+                    <label>Design style — the framer the page is built in</label>
+                    <select
+                      className="field-input"
+                      value={plan.framerId}
+                      disabled={phase === "building"}
+                      onChange={(e) => updateFramer(e.target.value)}
+                    >
+                      {FRAMERS.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name} — {f.tagline}
                         </option>
                       ))}
                     </select>

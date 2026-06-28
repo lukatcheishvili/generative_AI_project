@@ -23,6 +23,9 @@ export interface Strategy {
 export interface Plan {
   business: Shop;
   strategy: Strategy;
+  /** The chosen design system (web/lib/framers.ts). Picked by the Strategist
+   *  from the brief, with a random fallback; editable in the Plan card. */
+  framerId: string;
 }
 
 export const BUSINESS_GOALS = [

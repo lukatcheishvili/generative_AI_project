@@ -988,6 +988,30 @@ textarea.field-input:focus {
   line-height: 1.5;
   max-height: 200px;
   padding: 6px 2px;
+  overflow-y: auto;
+  /* Thin, button-less scrollbar (Firefox) for when text exceeds max-height. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Remove the native up/down arrow buttons and slim the scrollbar (WebKit/Chromium). */
+.composer textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.composer textarea::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.composer textarea::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.composer textarea::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Second row inside the composer: attach + model on the left, send on the right */
@@ -1292,6 +1316,7 @@ textarea.field-input:focus {
   font-weight: 700;
   font-size: 14.5px;
   margin-bottom: 10px;
+  color: #ffffff;
 }
 
 .arch-tip-row {
@@ -1308,7 +1333,7 @@ textarea.field-input:focus {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #8b93a4;
+  color: #ffffff;
   margin-bottom: 1px;
 }
 
@@ -1316,7 +1341,7 @@ textarea.field-input:focus {
   margin: 0;
   font-size: 12px;
   line-height: 1.42;
-  color: #e6ebf2;
+  color: #ffffff;
 }
 
 .arch-svg {
