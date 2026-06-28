@@ -124,9 +124,3 @@ photos, hit **Confirm & build page**, and download the generated landing page.
   whole codebase with the code and plain-English explanations beside it (built for the Q&A).
 - **[`web/AGENT.md`](web/AGENT.md)** — the frontend's design system and architecture rules.
 - **[`AGENT.md`](AGENT.md)** — repository operating guide (workflow, rules, changelog).
-
-## Note on the legacy version
-
-The repo also contains an earlier **Python / Streamlit** prototype (`src/`, `frontend/app.py`)
-that implemented the same Strategist → Generator idea. The **active, submitted product is the
-Next.js app in `web/`**; the Python version is kept for reference.

@@ -14,9 +14,9 @@ bottom) so you know exactly where to continue.
 - **Team:** Ricardo Liévano Pedroza · Cecile Tambey · Luka Tcheishvili · Juan José Rincón Briceño · Nicklas Urban · Michael Alexis Concepcion.
 - **Live demo:** https://generative-ai-project-puce.vercel.app/
 - **Repo:** https://github.com/lukatcheishvili/generative_AI_project
-- **Status:** **Deployed and working end-to-end** on Vercel + Google Vertex AI. The active
-  product is the Next.js app in **`web/`**. (An older Python/Streamlit prototype remains in
-  `src/` / `frontend/` for reference only.)
+- **Status:** **Deployed and working end-to-end** on Vercel + Google Vertex AI. The active —
+  and only — product is the Next.js app in **`web/`**. (The earlier Python/Streamlit prototype
+  has been removed; the repo is now web-only. Its history remains in git.)
 
 ## 2. The product
 
@@ -131,6 +131,11 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
 
 A running record of everything done, so anyone (or an LLM) can see the history and continue.
 All dates 2026-06-27 unless noted.
+
+### Repo cleanup (2026-06-28)
+- Removed the legacy **Python/Streamlit prototype** — `src/`, `frontend/`, `requirements.txt`
+  and `.streamlit/` — which the live app never referenced; the repo is now **web-only**. Trimmed
+  the now-dead Python/Streamlit entries from `.gitignore`. History retains the deleted files.
 
 ### Documentation pass
 - Rewrote **`README.md`** for PageForge with the team list and IE-rubric mapping.

@@ -2,31 +2,6 @@
 .env
 *.env
 !.env.example
-.streamlit/secrets.toml
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-.venv/
-venv/
-env/
-.python-version
-
-# Tooling
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-
-# State / checkpoints produced at runtime
-*.sqlite
-*.sqlite3
-checkpoints/
 
 # OS / editor
 .DS_Store
