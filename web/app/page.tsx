@@ -91,9 +91,12 @@ function credentialsFromSettings(s: Settings): Record<string, string> | undefine
 }
 
 const SUGGESTIONS = [
-  "A cozy specialty coffee shop in Lisbon focused on single-origin pour-overs for remote workers.",
+  "A specialty coffee shop in Lisbon serving single-origin pour-overs to remote workers.",
   "A boutique pilates studio in Madrid for busy professionals — premium, calm, results-driven.",
   "A family-run Italian trattoria in Brooklyn that wants more weeknight dinner reservations.",
+  "A fintech app helping first-time investors buy crypto with a simple, trustworthy interface.",
+  "A bespoke watchmaker crafting limited-run luxury timepieces for collectors.",
+  "A boutique accounting firm in London helping small businesses stay on top of their finances.",
 ];
 
 // --------------------------------------------------------------------------- //
@@ -933,8 +936,8 @@ export default function Home() {
               <div className="greeting">
                 <h1>What are we building?</h1>
                 <p>
-                  Describe your business in a sentence or two. I&apos;ll plan the
-                  marketing strategy first — you approve it, then I build the page.
+                  Describe your business. I&apos;ll draft a marketing strategy for
+                  your approval, then build the page.
                 </p>
                 <div className="suggestions">
                   {SUGGESTIONS.map((s, i) => (
