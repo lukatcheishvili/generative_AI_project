@@ -6,12 +6,11 @@
  * plan step; if it can't decide, we fall back to a RANDOM one (see
  * `resolveFramerId`). The user can override the choice in the Plan card.
  *
- * Specs are distilled from VoltAgent's awesome-design-md collection
- * (github.com/VoltAgent/awesome-design-md, `design-md/<brand>/DESIGN.md`).
- * Brand fonts are kept VERBATIM as the primary family with a graceful generic
- * fallback — proprietary faces (FerrariSans, MarkForMC, Kraken-Brand, Vodafone,
- * SpotifyMixUI, …) simply degrade to the fallback rather than being swapped for a
- * different font.
+ * The looks are distilled from real-world design references; the design-style
+ * names here are generic (no source brands). Brand font-family names are kept
+ * VERBATIM as the primary family with a graceful generic fallback — proprietary
+ * faces simply degrade to the fallback rather than being swapped for a different
+ * font.
  *
  * This catalog + its selection logic is documented in web/AGENT.md §8.
  */
@@ -32,18 +31,18 @@ export interface FramerType {
 export interface Framer {
   /** Stable id used in the Plan and the picker. */
   id: string;
-  /** Display name shown in the Plan card. */
+  /** Short title shown in the Plan card. */
   name: string;
-  /** One-line feel, shown next to the name and fed to the Strategist. */
+  /** One-line description, shown next to the title and fed to the Strategist. */
   tagline: string;
   /** Light / dark / etc — the canvas mood in a few words. */
   mood: string;
   /** Keywords the Strategist matches the brief against. */
   bestFor: string;
   fonts: {
-    /** Exact brand display family + fallback chain (kept verbatim). */
+    /** Exact display family + fallback chain (kept verbatim). */
     display: string;
-    /** Exact brand body family + fallback chain. */
+    /** Exact body family + fallback chain. */
     body: string;
     /** How to load: which faces are free on Google Fonts vs. proprietary. */
     loadNote: string;
@@ -61,9 +60,9 @@ export interface Framer {
 // --------------------------------------------------------------------------- //
 export const FRAMERS: Framer[] = [
   {
-    id: "ferrari",
-    name: "Ferrari",
-    tagline: "Cinematic luxury, near-black with one racing red",
+    id: "cinematic-noir",
+    name: "Cinematic Noir",
+    tagline: "Refined near-black canvas with a single racing red",
     mood: "Dark, editorial, refined",
     bestFor:
       "luxury & automotive, fine dining, jewelry/watches, premium real estate, " +
@@ -71,10 +70,10 @@ export const FRAMERS: Framer[] = [
     fonts: {
       display: '"FerrariSans", -apple-system, system-ui, sans-serif',
       body: '"FerrariSans", -apple-system, system-ui, sans-serif',
-      loadNote: "FerrariSans is proprietary — the system fallback applies.",
+      loadNote: "The display face is proprietary — the system fallback applies.",
     },
     palette: [
-      { token: "primary", hex: "#da291c", usage: "Rosso Corsa — primary CTA & mark only" },
+      { token: "primary", hex: "#da291c", usage: "racing red — primary CTA & brand mark only" },
       { token: "primary-active", hex: "#b01e0a", usage: "hover / press" },
       { token: "ink", hex: "#ffffff", usage: "display & strong text" },
       { token: "body", hex: "#969696", usage: "body text on dark" },
@@ -94,15 +93,15 @@ export const FRAMERS: Framer[] = [
     signatures: [
       "Open with a full-bleed cinematic hero photograph filling the viewport top.",
       "Hold a near-black canvas (#181818) with pure white display type — modest weights, never bombastic.",
-      "Use Rosso Corsa (#da291c) scarcely: the primary CTA and the brand mark, nothing more.",
+      "Use the racing red (#da291c) scarcely: the primary CTA and the brand mark, nothing more.",
       "Set buttons and nav in UPPERCASE with wide letter-spacing; keep corners tight and sharp.",
       "Drop into a white editorial band only for detail/pricing content below the hero.",
     ],
   },
   {
-    id: "mastercard",
-    name: "Mastercard",
-    tagline: "Warm cream editorial with pill shapes and orbital circles",
+    id: "warm-editorial",
+    name: "Warm Editorial",
+    tagline: "Cream canvas with pill shapes and orbital circles",
     mood: "Light, warm, institutional-editorial",
     bestFor:
       "payments & finance, corporate & B2B, professional services, consultancies, " +
@@ -111,7 +110,7 @@ export const FRAMERS: Framer[] = [
       display: '"MarkForMC", "Sofia Sans", Arial, sans-serif',
       body: '"MarkForMC", "Sofia Sans", Arial, sans-serif',
       loadNote:
-        "MarkForMC is proprietary — Sofia Sans (its declared fallback) is on Google Fonts; load it. Keep body weight 450 and -2% heading tracking.",
+        "The display face is proprietary — Sofia Sans (its fallback) is on Google Fonts; load it. Keep body weight 450 and -2% heading tracking.",
     },
     palette: [
       { token: "canvas", hex: "#f3f0ee", usage: "warm putty-cream page background (never white)" },
@@ -142,9 +141,9 @@ export const FRAMERS: Framer[] = [
     ],
   },
   {
-    id: "kraken",
-    name: "Kraken",
-    tagline: "Clean white crypto exchange commanded by purple",
+    id: "violet-precision",
+    name: "Violet Precision",
+    tagline: "Crisp white tech canvas commanded by bold purple",
     mood: "Light, professional, trustworthy",
     bestFor:
       "crypto & fintech, exchanges/trading, B2B SaaS, tech products, financial " +
@@ -153,10 +152,10 @@ export const FRAMERS: Framer[] = [
       display: '"Kraken-Brand", "IBM Plex Sans", Helvetica, Arial, sans-serif',
       body: '"Kraken-Product", "Helvetica Neue", Helvetica, Arial, sans-serif',
       loadNote:
-        "Kraken's faces are proprietary — IBM Plex Sans (the declared display fallback) is on Google Fonts; load it. Body falls back to Helvetica.",
+        "The display/UI faces are proprietary — IBM Plex Sans (the display fallback) is on Google Fonts; load it. Body falls back to Helvetica.",
     },
     palette: [
-      { token: "primary", hex: "#7132f5", usage: "Kraken Purple — primary CTA, brand, links" },
+      { token: "primary", hex: "#7132f5", usage: "brand purple — primary CTA, links, accents" },
       { token: "primary-dark", hex: "#5741d8", usage: "outlined-button borders / hover" },
       { token: "primary-subtle", hex: "rgba(133,91,251,0.16)", usage: "subtle purple button bg" },
       { token: "ink", hex: "#101114", usage: "primary near-black text" },
@@ -176,17 +175,17 @@ export const FRAMERS: Framer[] = [
     radius: "12px on all buttons (rounded, NOT pill — 12px is the max); cards 8–16px; badges 6–8px",
     spacing: "compact ladder (4/8/12/16/24); whisper-level shadows only",
     signatures: [
-      "Build on clean white backgrounds; Kraken Purple (#7132f5) commands every CTA, link and brand accent.",
+      "Build on clean white backgrounds; the brand purple (#7132f5) commands every CTA, link and accent.",
       "Buttons use a 12px radius — rounded but NEVER pill (12px is the hard cap).",
-      "Dual font: Kraken-Brand bold (700) with negative tracking for display, Kraken-Product for UI/body.",
+      "Pair a bold display font (700) with negative tracking for headings against a clean UI font for body.",
       "Near-black (#101114) text on a cool blue-gray neutral scale; stay strictly within the defined purple scale.",
       "Keep shadows whisper-level (rgba(0,0,0,0.03) 0 4px 24px); use green (#149e61) only for positive/success badges.",
     ],
   },
   {
-    id: "vodafone",
-    name: "Vodafone",
-    tagline: "Telecom super-brand: huge uppercase display, scarlet CTA",
+    id: "scarlet-impact",
+    name: "Scarlet Impact",
+    tagline: "Huge uppercase headlines over photos, scarlet CTA",
     mood: "Light, bold, photographic",
     bestFor:
       "telecom, big consumer & retail brands, services, events, mass-market " +
@@ -194,7 +193,7 @@ export const FRAMERS: Framer[] = [
     fonts: {
       display: 'Vodafone, "Vodafone Rg", "Helvetica Neue", Arial, sans-serif',
       body: 'Vodafone, "Vodafone Rg", "Helvetica Neue", Arial, sans-serif',
-      loadNote: "Vodafone's display sans is proprietary — the Helvetica Neue / Arial fallback applies.",
+      loadNote: "The display sans is proprietary — the Helvetica Neue / Arial fallback applies.",
     },
     palette: [
       { token: "primary", hex: "#e60000", usage: "scarlet red — every primary CTA & brand" },
@@ -223,9 +222,9 @@ export const FRAMERS: Framer[] = [
     ],
   },
   {
-    id: "spotify",
-    name: "Spotify",
-    tagline: "Immersive near-black, content-first, one green accent",
+    id: "neon-pulse",
+    name: "Neon Pulse",
+    tagline: "Immersive near-black, content-first, one electric-green accent",
     mood: "Dark, immersive, theater-like",
     bestFor:
       "music & audio, entertainment, media & streaming, creative, events, " +
@@ -234,7 +233,7 @@ export const FRAMERS: Framer[] = [
       display: '"SpotifyMixUITitle", "Helvetica Neue", Helvetica, Arial, sans-serif',
       body: '"SpotifyMixUI", "Helvetica Neue", Helvetica, Arial, sans-serif',
       loadNote:
-        "Spotify's CircularSp / SpotifyMixUI faces are proprietary — the Helvetica / Arial fallback applies.",
+        "The display/UI faces are proprietary — the Helvetica / Arial fallback applies.",
     },
     palette: [
       { token: "canvas", hex: "#121212", usage: "deepest near-black background" },
@@ -256,7 +255,7 @@ export const FRAMERS: Framer[] = [
     spacing: "compact; heavy shadows (rgba(0,0,0,0.5) 0 8px 24px) on elevated elements",
     signatures: [
       "Wrap the page in a near-black cocoon (#121212 / #181818 / #1f1f1f); let the UI recede so imagery/content provides the color.",
-      "Spotify Green (#1ed760) is the single accent — always functional (play, active, CTA), never decorative.",
+      "The electric green (#1ed760) is the single accent — always functional (play, active, CTA), never decorative.",
       "Use pill-and-circle geometry: full-pill buttons (radius 9999px), circular play controls (50%), pill search inputs.",
       "Button labels are UPPERCASE with wide letter-spacing (1.4–2px) — a systematic 'label' voice.",
       "Drive hierarchy with a bold/regular weight binary (700 vs 400); keep type compact and functional.",

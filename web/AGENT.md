@@ -208,13 +208,16 @@ distilled from VoltAgent's `awesome-design-md`
 
 ### The catalog (5 distinct looks)
 
+Names are generic by design (no source brands). The underlying CSS `font-family`
+values are kept verbatim for fidelity but are never shown in the picker.
+
 | id | name | feel | best for |
 |---|---|---|---|
-| `ferrari` | Ferrari | cinematic near-black luxury, one racing red | luxury, automotive, fine dining, jewelry, premium |
-| `mastercard` | Mastercard | warm cream editorial, pill shapes, orbital circles | payments, finance, corporate/B2B, professional services |
-| `kraken` | Kraken | clean white crypto exchange, commanded by purple | crypto/fintech, exchanges, B2B SaaS, tech, data-driven |
-| `vodafone` | Vodafone | huge uppercase display over photos, scarlet CTA | telecom, big consumer/retail, services, events, bold |
-| `spotify` | Spotify | immersive near-black, content-first, one green accent | music/audio, entertainment, media, creative, nightlife, apps |
+| `cinematic-noir` | Cinematic Noir | refined near-black, one racing red | luxury, automotive, fine dining, jewelry, premium |
+| `warm-editorial` | Warm Editorial | warm cream, pill shapes, orbital circles | payments, finance, corporate/B2B, professional services |
+| `violet-precision` | Violet Precision | crisp white tech canvas, bold purple | crypto/fintech, exchanges, B2B SaaS, tech, data-driven |
+| `scarlet-impact` | Scarlet Impact | huge uppercase display over photos, scarlet CTA | telecom, big consumer/retail, services, events, bold |
+| `neon-pulse` | Neon Pulse | immersive near-black, one electric-green accent | music/audio, entertainment, media, creative, nightlife, apps |
 
 ### Selection logic (prompt-driven, random fallback)
 
@@ -237,8 +240,8 @@ distilled from VoltAgent's `awesome-design-md`
 Brand font-family names are kept **verbatim** as the primary family, each with a
 graceful fallback chain. Proprietary faces (FerrariSans, MarkForMC, Kraken-Brand,
 Vodafone, SpotifyMixUI, …) simply fall back — they are **never** swapped for a
-different font. Where a face is free (Sofia Sans for `mastercard`, IBM Plex Sans
-for `kraken`) the page loads it via a Google Fonts `<link>`.
+different font. Where a face is free (Sofia Sans for `warm-editorial`, IBM Plex
+Sans for `violet-precision`) the page loads it via a Google Fonts `<link>`.
 
 ### Adding / editing a framer
 
