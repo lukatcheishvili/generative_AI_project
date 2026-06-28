@@ -17,7 +17,10 @@ import { BUILD_STEP, type Plan } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// Generating a full HTML page can take well over a minute, so give the function
+// the maximum room the plan allows. The old 60s cap was killing the Generator
+// mid-call, which left the client stuck on "Working…".
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   let body: { plan?: unknown; images?: unknown; model?: unknown; credentials?: unknown };

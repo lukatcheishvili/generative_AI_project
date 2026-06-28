@@ -197,34 +197,64 @@ function strategyToMarkdown(plan: Plan): string {
 
 type SSEHandler = (event: string, payload: any) => void;
 
-async function streamSSE(url: string, body: unknown, onEvent: SSEHandler) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok || !res.body) {
-    throw new Error((await res.text()) || `Request failed (${res.status})`);
-  }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const frames = buffer.split("\n\n");
-    buffer = frames.pop() ?? "";
-    for (const frame of frames) {
-      let event = "message";
-      let data = "";
-      for (const line of frame.split("\n")) {
-        if (line.startsWith("event:")) event = line.slice(6).trim();
-        else if (line.startsWith("data:")) data += line.slice(5).trim();
-      }
-      if (data) onEvent(event, JSON.parse(data));
+async function streamSSE(
+  url: string,
+  body: unknown,
+  onEvent: SSEHandler,
+  timeoutMs = 305_000,
+) {
+  // Abort if the whole request outlives the server's max function duration, so a
+  // hung or killed connection surfaces an error instead of spinning forever.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    if (!res.ok || !res.body) {
+      throw new Error((await res.text()) || `Request failed (${res.status})`);
     }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let sawTerminal = false; // a "done" or "error" event = a clean finish
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const frames = buffer.split("\n\n");
+      buffer = frames.pop() ?? "";
+      for (const frame of frames) {
+        let event = "message";
+        let data = "";
+        for (const line of frame.split("\n")) {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          else if (line.startsWith("data:")) data += line.slice(5).trim();
+        }
+        if (data) {
+          if (event === "done" || event === "error") sawTerminal = true;
+          onEvent(event, JSON.parse(data));
+        }
+      }
+    }
+    // The function was killed (e.g. it hit the duration limit) before sending a
+    // result — don't leave the UI stuck; report it so the user can retry.
+    if (!sawTerminal) {
+      throw new Error(
+        "The server ended the response early — the build may have taken too long. Please try again.",
+      );
+    }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("This took too long and was stopped. Please try again.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
