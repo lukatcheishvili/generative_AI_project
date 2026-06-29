@@ -1,0 +1,15 @@
+# PageForge Python backend — FastAPI + LangGraph.
+# Pinned to ranges that are known to work together on Python 3.11+.
+
+fastapi>=0.111,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.7,<3.0
+python-dotenv>=1.0,<2.0
+
+# Agents / orchestration
+langgraph>=0.2.19,<0.3
+langchain-core>=0.3.18,<0.4
+
+# LLM providers (mirror the TS provider seam)
+google-generativeai>=0.7,<1.0          # Gemini Developer API
+google-cloud-aiplatform>=1.60,<2.0     # Vertex AI (provides the `vertexai` package)
