@@ -1,73 +1,81 @@
-# PageForge — AI Marketing Strategy → Landing Page (Web)
+# PageForge — Web frontend (Next.js + TypeScript)
 
-Next.js + TypeScript rewrite of the BrewPage pipeline, generalized from coffee
-shops to **any small or medium business** and built to deploy on **Vercel**.
+The **React frontend** for PageForge, generalized from coffee shops to **any
+small or medium business** and built to deploy on **Vercel**.
 
-A non-technical owner fills in a short form (optionally uploads photos), and a
-two-agent **LangGraph.js** pipeline:
+> The **backend brains** (the two agents, the LangGraph pipeline, and the LLM
+> provider seam) now live in a separate **Python** service in
+> [`../server`](../server) (FastAPI + LangGraph). This `web/` app is the UI only.
+
+A non-technical owner describes their business (optionally uploads photos), and a
+two-agent pipeline running in the Python backend:
 
 1. **Strategist** — makes the marketing decisions (positioning, audience, value
-   proposition, tone, conversion goal) and returns them as JSON.
-2. **Generator** — turns that strategy + any photos into a single, self-contained,
-   downloadable HTML landing page.
+   proposition, tone, conversion goal) and returns them as JSON for the human to
+   approve.
+2. **Generator** — turns the approved strategy + any photos into a single,
+   self-contained, downloadable HTML landing page.
 
-Progress streams to the browser live (Server-Sent Events) as each agent finishes.
+Progress streams to the browser live (Server-Sent Events) as each agent runs.
 
-The model provider is swappable via one env var — **Gemini API** or **Vertex AI** —
-behind a single seam (`lib/llm.ts`). The graph never changes.
+The frontend calls same-origin `/api/plan` and `/api/generate`; `next.config.mjs`
+**rewrites** those to the Python backend (default `http://127.0.0.1:8000`,
+override with `PY_BACKEND_URL`). The provider (Gemini API vs Vertex AI) is chosen
+in the backend — see [`../server/README.md`](../server/README.md).
 
 ```
 app/
-  page.tsx              the form UI + live SSE consumption + result tabs
-  api/generate/route.ts runs the graph, streams progress as SSE
+  page.tsx        the whole UI: brief → plan approval → result, live SSE consumption
+  layout.tsx      app shell (theme, favicon, custom cursor)
+  globals.css     design tokens + all styling
+components/       ThemeToggle, CustomCursor, ArchitectureDiagram
 lib/
-  types.ts              Shop / Strategy types, business types & goals
-  llm.ts                provider seam: gemini | vertex
-  agents.ts             strategist + generator nodes (prompts, helpers)
-  graph.ts              LangGraph.js StateGraph: strategist -> generator
+  types.ts        Shop / Strategy / Plan types, goals, model list (used by the UI)
+  framers.ts      the design-system catalog the Plan card / picker renders
 ```
+
+(The former `lib/llm.ts`, `lib/agents.ts`, `lib/graph.ts` and `app/api/*` route
+handlers were ported to Python and now live in `../server`.)
 
 ---
 
 ## Run locally
 
-Requires **Node.js 20+**.
+Requires **Node.js 20+** for the frontend and **Python 3.11+** for the backend.
+You need **both** running for local dev.
 
 ```bash
+# terminal 1 — Python backend (see ../server/README.md)
+cd server
+python -m venv .venv
+.venv\Scripts\Activate.ps1            # Windows  (macOS/Linux: source .venv/bin/activate)
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# terminal 2 — Next.js frontend
 cd web
 npm install
-# create a file named  web/.env.local  with the variables shown below
-npm run dev                     # http://localhost:3000
+npm run dev                            # http://localhost:3000
 ```
 
-### Provider config (.env.local)
+Open http://localhost:3000, describe a business, **approve the plan**, upload at
+least 3 photos, and build the page.
 
-**Option A — Gemini API (simplest):**
+### Where config lives
 
-```
-LLM_PROVIDER=gemini
-GEMINI_API_KEY=your_key_here    # free key: https://aistudio.google.com/apikey
-```
-
-**Option B — Vertex AI (Google Cloud):**
-
-```
-LLM_PROVIDER=vertex
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
-GOOGLE_SERVICE_ACCOUNT_JSON=<raw service-account JSON, or base64 of it>
-```
-
-Locally you can skip `GOOGLE_SERVICE_ACCOUNT_JSON` and instead authenticate with
-Application Default Credentials:
-
-```bash
-gcloud auth application-default login
-```
+The frontend itself needs **no** env vars for normal use. All model/provider
+config (`LLM_PROVIDER`, `GEMINI_API_KEY`, `GOOGLE_CLOUD_PROJECT`, …) is read by
+the **Python backend** — it loads them from `web/.env.local` automatically (the
+shared source of truth) or from `server/.env`. Users can also enter their own
+credentials at runtime via the in-app **Settings** panel, which are sent
+per-request to the backend.
 
 ---
 
-## Vertex AI / Google Cloud setup
+## Vertex AI / Google Cloud setup (for the backend)
+
+These steps configure the **Python backend's** provider. Set the resulting
+values in `web/.env.local` (shared) or `server/.env`.
 
 1. **Create a project** — https://console.cloud.google.com/projectcreate
    Note the **Project ID** and **Project Number**.
@@ -76,7 +84,6 @@ gcloud auth application-default login
    ```bash
    gcloud services enable aiplatform.googleapis.com --project YOUR_PROJECT_ID
    ```
-   (or Console → APIs & Services → Enable APIs → "Vertex AI API").
 4. **Create a service account** with the **Vertex AI User** role
    (`roles/aiplatform.user`), then create a **JSON key** for it:
    ```bash
@@ -90,24 +97,21 @@ gcloud auth application-default login
    gcloud iam service-accounts keys create key.json \
      --iam-account pageforge@YOUR_PROJECT_ID.iam.gserviceaccount.com
    ```
-5. **Give the JSON to the app.** For Vercel, base64-encode it so it fits cleanly
-   in one env var:
+5. **Give the JSON to the backend** as `GOOGLE_SERVICE_ACCOUNT_JSON` (raw or
+   base64). Locally you can skip it and use Application Default Credentials:
    ```bash
-   base64 -w0 key.json        # Linux
-   # macOS: base64 -i key.json
+   gcloud auth application-default login
    ```
-   Paste the result into `GOOGLE_SERVICE_ACCOUNT_JSON`. **Do not commit `key.json`.**
 
 ---
 
-## Deploy to Vercel
+## Deploy
 
-1. Push this repo to GitHub (already connected).
-2. On vercel.com → **New Project** → import the repo.
-3. Set **Root Directory** to `web`.
-4. Add the environment variables (same as `.env.local`) under
-   **Settings → Environment Variables**.
-5. Deploy. Vercel auto-detects Next.js and builds it.
+The frontend deploys to **Vercel** (Root Directory = `web`) as before, but the
+Python backend must be hosted separately (e.g. Render, Railway, or Google Cloud
+Run). After deploying the backend, set `PY_BACKEND_URL` in the Vercel project's
+environment variables to the backend's public URL so the rewrite proxies to it.
 
-> Generation takes ~20–40s. `maxDuration` is set to 60s in the API route; if you
-> hit timeouts on the Hobby plan, shorten the prompt or upgrade to Pro (300s).
+> Production deployment of the Python service is an open task — see the root
+> `AGENT.md` §6. For grading/demo, the app runs end-to-end locally with the two
+> commands above.

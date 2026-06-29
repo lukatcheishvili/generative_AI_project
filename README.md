@@ -46,53 +46,65 @@ project's core architectural justification (multi-agent + tool use + human-in-th
 ## Architecture at a glance
 
 ```
-You (browser)                        ← Chat UI, history & settings, photo upload
+You (browser)                        ← Next.js React UI (web/) — unchanged
    │  describe your business
    ▼
-/api/plan   ──▶  STRATEGIST agent     ← turns the brief into a marketing plan (JSON)
+/api/plan   ──▶  STRATEGIST agent     ← Python backend (server/): turns the brief into a plan (JSON)
    │
    ▼
 PLAN CARD   ──▶  you review & approve  ← the human-in-the-loop gate ("Plan Mode")
    │  confirm
    ▼
-/api/generate ─▶ GENERATOR agent       ← turns the approved plan + photos into HTML
+/api/generate ─▶ GENERATOR agent       ← Python backend: turns the approved plan + photos into HTML
    │
    ▼
 Landing page (download / preview)
 ```
 
-Both agents call Google **Gemini 2.5 Flash** through a single **provider seam** (`lib/llm.ts`)
-that can target the **Gemini API** *or* **Vertex AI** — switched by one environment variable,
-or overridden per-request from the in-app **Settings** panel. The two-agent flow is also
-expressed as a **LangGraph.js** graph (`lib/graph.ts`).
+The React frontend (`web/`) calls same-origin `/api/plan` and `/api/generate`, which a Next.js
+rewrite proxies to a separate **Python** backend (`server/`, FastAPI + LangGraph). Both agents
+call Google **Gemini 2.5 Flash** through a single **provider seam** (`server/app/llm.py`) that
+can target the **Gemini API** *or* **Vertex AI** — switched by one environment variable, or
+overridden per-request from the in-app **Settings** panel. The two-agent flow is orchestrated
+by **LangGraph** (`server/app/graph.py`).
 
 There is a built-in **Architecture view** inside the app (the grid icon in the left rail) that
 diagrams this exact flow, with hover popovers explaining each component.
 
 ## Tech stack
 
-- **Frontend + backend:** Next.js 14 (App Router) + TypeScript, deployed on **Vercel**
-- **Agents / orchestration:** LangGraph.js, custom prompts
-- **LLM:** Google **Gemini 2.5 Flash** via the Gemini API or Vertex AI
+- **Frontend:** Next.js 14 (App Router) + TypeScript, deployed on **Vercel**
+- **Backend:** **Python** — FastAPI serving SSE, in `server/`
+- **Agents / orchestration:** **LangGraph** (Python), custom prompts
+- **LLM:** Google **Gemini 2.5 Flash** via the Gemini API or Vertex AI (`google-generativeai` / `vertexai`)
 - **Real-time:** Server-Sent Events (SSE) stream each agent's progress live to the UI
-- **State:** typed `Plan` / `Strategy` objects; conversation history + settings in `localStorage`
+- **State:** typed `Plan` / `Strategy` objects (Pydantic in Python, TS types in the UI); conversation history + settings in `localStorage`
 
 ## How to run it
 
-The app lives in the **`web/`** folder.
+The app is two services: the **Python backend** (`server/`) and the **Next.js frontend**
+(`web/`). Run both — two terminals:
 
 ```bash
+# terminal 1 — Python backend (FastAPI + LangGraph)
+cd server
+python -m venv .venv
+.venv\Scripts\Activate.ps1         # Windows  (macOS/Linux: source .venv/bin/activate)
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# terminal 2 — Next.js frontend (proxies /api/* to the backend)
 cd web
 npm install
-# create a file named  web/.env.local  with the variables shown below
-npm run dev                       # http://localhost:3000
+npm run dev                        # http://localhost:3000
 ```
 
-**Minimum config (`.env.local`) — Gemini API (simplest):**
+**Config** lives in `web/.env.local` (the backend reads it automatically) —
+**Gemini API (simplest):**
 
 ```
 LLM_PROVIDER=gemini
-GEMINI_API_KEY=your_key_here      # free key: https://aistudio.google.com/apikey
+GEMINI_API_KEY=your_key_here       # free key: https://aistudio.google.com/apikey
 ```
 
 **Or Vertex AI (Google Cloud):**
@@ -104,7 +116,8 @@ GOOGLE_CLOUD_LOCATION=europe-west1
 GOOGLE_SERVICE_ACCOUNT_JSON=<service-account JSON, raw or base64>
 ```
 
-Full Vertex setup and deployment steps are in **[`web/README.md`](web/README.md)**.
+Backend details: **[`server/README.md`](server/README.md)**. Full Vertex setup and
+deployment: **[`web/README.md`](web/README.md)**.
 
 Then: open the app, describe a business, **review/approve the plan**, upload at least 3
 photos, hit **Confirm & build page**, and download the generated landing page.
@@ -113,8 +126,8 @@ photos, hit **Confirm & build page**, and download the generated landing page.
 
 | Pillar | Where it's satisfied |
 |---|---|
-| **Technical depth & architecture** | Justified multi-agent design (Strategist → human approval → Generator); provider seam; LangGraph graph; prompt engineering in `web/lib/agents.ts` |
-| **MVP integration & frontend UX** | Real-time SSE streaming from `web/app/api/*` to the chat UI; polished Next.js interface deployed on Vercel |
+| **Technical depth & architecture** | Justified multi-agent design (Strategist → human approval → Generator); Python backend; provider seam; LangGraph graph; prompt engineering in `server/app/agents.py` |
+| **MVP integration & frontend UX** | Real-time SSE streaming from the Python FastAPI backend (`server/app/main.py`) to the chat UI; polished Next.js interface deployed on Vercel |
 | **Business use case & value** | Strategy-driven pages for SMBs that can't afford an agency; human-in-the-loop risk control |
 | **Live demo & integration** | Working live demo at the URL above; frontend ↔ backend stream results in real time |
 
@@ -122,5 +135,6 @@ photos, hit **Confirm & build page**, and download the generated landing page.
 
 - **[`docs/CODE_GUIDE.md`](docs/CODE_GUIDE.md)** — a detailed, file-by-file walkthrough of the
   whole codebase with the code and plain-English explanations beside it (built for the Q&A).
+- **[`server/README.md`](server/README.md)** — the Python backend (FastAPI + LangGraph): how to run it.
 - **[`web/AGENT.md`](web/AGENT.md)** — the frontend's design system and architecture rules.
 - **[`AGENT.md`](AGENT.md)** — repository operating guide (workflow, rules, changelog).

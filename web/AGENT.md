@@ -15,8 +15,12 @@ that defines *how this frontend is built and how it should look*.
 ## 1. Architecture
 
 Next.js 14 (App Router) + TypeScript, deployed on Vercel (`Root Directory = web`).
-The model provider is swappable via `LLM_PROVIDER` (`gemini | vertex`) behind one
-seam, `lib/llm.ts`. Two agents, ported from the original Python BrewPage:
+**This `web/` app is the UI only.** The agents/graph/LLM seam now live in a
+separate **Python backend** (`../server`, FastAPI + LangGraph); the frontend calls
+same-origin `/api/plan` and `/api/generate`, which `next.config.mjs` **rewrites**
+to that backend (`PY_BACKEND_URL`, default `http://127.0.0.1:8000`). The model
+provider is swappable via `LLM_PROVIDER` (`gemini | vertex`) behind one seam,
+`../server/app/llm.py`. Two agents (`../server/app/agents.py`):
 
 - **Strategist** — turns the user's free-form brief into a structured *plan*
   (extracted business basics + marketing strategy).
@@ -172,8 +176,10 @@ gemini-2.5-pro     (higher quality, slower)
 gemini-2.0-flash   (fallback)
 ```
 
-Add others by extending `MODELS`; no other change needed — `lib/llm.ts` already
-accepts a per-request model on both the Gemini API and Vertex paths.
+Add others by extending `MODELS` (in `lib/types.ts` for the picker UI, and
+`../server/app/types.py` for the backend); no other change needed —
+`../server/app/llm.py` already accepts a per-request model on both the Gemini API
+and Vertex paths.
 
 ---
 
@@ -221,8 +227,8 @@ values are kept verbatim for fidelity but are never shown in the picker.
 
 ### Selection logic (prompt-driven, random fallback)
 
-1. **Strategist picks it** — `runStrategist` ([`lib/agents.ts`](lib/agents.ts))
-   shows the model the catalog (`framerCatalogForPrompt()`) and asks it to choose
+1. **Strategist picks it** — `run_strategist` (`../server/app/agents.py`)
+   shows the model the catalog (`framer_catalog_for_prompt()`) and asks it to choose
    one `design_system` id that matches the business + tone, or `""` if unsure.
 2. **Random fallback** — `resolveFramerId()` keeps the model's pick **only if it
    names a real framer**; otherwise it returns a random valid id. So an empty /
