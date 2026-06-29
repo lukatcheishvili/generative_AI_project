@@ -1,0 +1,35 @@
+# Render Blueprint — deploys the PageForge Python backend (FastAPI + LangGraph).
+#
+# One-time setup in the Render dashboard:
+#   New → Blueprint → connect this GitHub repo. Render reads this file, creates
+#   the web service, and prompts you for the secret env vars marked sync:false.
+#
+# Uses Render's native Python runtime (no Docker needed). The Python version is
+# pinned by server/.python-version. After it deploys, copy the service URL (e.g.
+# https://pageforge-backend.onrender.com) into Vercel as PY_BACKEND_URL.
+
+services:
+  - type: web
+    name: pageforge-backend
+    runtime: python
+    rootDir: server
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: LLM_PROVIDER
+        value: vertex
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      # Project id is already public in the repo docs — not a secret.
+      - key: GOOGLE_CLOUD_PROJECT
+        value: generative-ai-class-496013
+      - key: GOOGLE_CLOUD_LOCATION
+        value: europe-west1
+      # Secrets: set these in the dashboard (paste the values from web/.env.local).
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
