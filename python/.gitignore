@@ -1,0 +1,7 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+landing_page.html
+.streamlit/secrets.toml
