@@ -1,22 +1,23 @@
 # AGENT.md — Project Context, Rules & Log
 
-**Single source of truth for this repository.** Read this first. It gives any contributor — or
-an LLM they connect the repo to — the full context: what the project is, how it's built, the
-rules to follow, where things stand, and a detailed **log of everything done** (at the very
-bottom) so you know exactly where to continue.
+**Single source of truth for this branch (`stremlit-langraph`).** Read this first. It gives any
+contributor — or an LLM they connect the repo to — the full context: what the project is, how
+it's built, the rules to follow, where things stand, and a **log of what's been done** (at the
+bottom) so you know where to continue.
 
 ---
 
 ## 1. Project at a glance
 
 - **Name:** PageForge — a strategy-first, two-agent landing-page generator.
-- **Course:** Generative AI — final project, **IE University** (functional MVP + live demo).
+- **Course:** Generative AI — final project, **IE University** (functional MVP).
 - **Team:** Ricardo Liévano Pedroza · Cecile Tambey · Luka Tcheishvili · Juan José Rincón Briceño · Nicklas Urban · Michael Alexis Concepcion.
-- **Live demo:** https://generative-ai-project-puce.vercel.app/
 - **Repo:** https://github.com/lukatcheishvili/generative_AI_project
-- **Status:** **Deployed and working end-to-end** on Vercel + Google Vertex AI. The active —
-  and only — product is the Next.js app in **`web/`**. (The earlier Python/Streamlit prototype
-  has been removed; the repo is now web-only. Its history remains in git.)
+- **Run locally:** `cd python && streamlit run app.py` → http://localhost:8501 (no hosted demo).
+- **Status:** This branch is the **Streamlit + LangGraph (Python)** implementation of PageForge,
+  in **`python/`**. It works end-to-end locally, with **LangGraph driving the human-in-the-loop
+  approval gate**. (The Next.js/TypeScript `web/` app lives on other branches — `main`,
+  `PageForge_V2` — not here.)
 
 ## 2. The product
 
@@ -25,66 +26,62 @@ templated pages with no marketing strategy. PageForge makes the **marketing deci
 lets a **human approve** them, then builds the page:
 
 ```
-describe business → STRATEGIST agent → editable PLAN CARD (human approves) → GENERATOR agent → HTML page
+describe business → STRATEGIST agent → editable PLAN (human approves) → GENERATOR agent → HTML page
 ```
 
 - **Why two agents (not one prompt):** strategy and execution are different jobs. Splitting them
   forces the decisions to happen first and independently, with a human-in-the-loop gate between.
-- **Real-time:** progress streams from the server to the browser via Server-Sent Events (SSE).
+- **The gate is real LangGraph:** the pipeline is compiled with a checkpointer and
+  `interrupt_before=["generator"]`, so after the Strategist writes the plan the graph **pauses**,
+  Streamlit shows the editable plan, and the Generator only runs once the human confirms.
 
 ## 3. Architecture & key files
 
-**Stack:** Next.js 14 (App Router) + TypeScript · LangGraph.js · Google Gemini 2.5 Flash (via
-Gemini API **or** Vertex AI) · deployed on Vercel.
+**Stack:** **Streamlit** (UI) · **LangGraph** (orchestration, Python) · Google **Gemini 2.5
+Flash** via the Gemini API **or** Vertex AI. Everything lives in `python/`.
 
 ```
-web/
-├── app/
-│   ├── layout.tsx              app shell: theme, IE favicon, custom cursor
-│   ├── page.tsx                the whole UI + client-side flow (the big file)
-│   ├── globals.css             design tokens (light/dark) + all styling
-│   └── api/
-│       ├── plan/route.ts       runs the Strategist, streams progress (SSE)
-│       └── generate/route.ts   runs the Generator, streams the HTML (SSE)
-├── components/                 ThemeToggle, CustomCursor, ArchitectureDiagram
-├── lib/
-│   ├── types.ts                shared data shapes (Plan, Strategy, …)
-│   ├── llm.ts                  PROVIDER SEAM: callModel() → gemini | vertex
-│   ├── agents.ts               the two agents + their prompts (the brains)
-│   └── graph.ts                the two-agent pipeline as a LangGraph graph
-└── public/ie-logo.png          IE University logo (favicon)
+python/
+├── app.py                  Streamlit UI (brief → approve → page); Settings panel
+├── requirements.txt
+├── .streamlit/config.toml
+└── src/
+    ├── state.py            PipelineState (brief, model, creds, images, plan, html)
+    ├── llm.py              PROVIDER SEAM: call_model() → gemini | vertex
+    ├── framers.py          design-system catalog (5 looks the Generator builds in)
+    ├── agents.py           the two agents + their prompts (the brains): strategist/generator
+    ├── graph.py            LangGraph: strategist → [interrupt_before] → generator
+    └── main.py             CLI runner (straight-through graph, no pause)
 ```
 
-A full, friendly, file-by-file walkthrough is in **[`docs/CODE_GUIDE.md`](docs/CODE_GUIDE.md)**.
-The frontend design-system rules are in **[`web/AGENT.md`](web/AGENT.md)**.
+`graph.py → agents.py → llm.py`: the graph orders the agents, the agents call the model. A full,
+friendly walkthrough is in **[`python/README.md`](python/README.md)**.
 
 ## 4. Quick reference (facts you'll need)
 
 | Thing | Value |
 |---|---|
-| **Run locally** | `cd web && npm install && npm run dev` — create `web/.env.local` first (vars below) |
-| **Quality gate** | `cd web && npm run build` (type-checks the whole app — must pass) |
-| **Deploy** | Auto on push to `main` via Vercel; **Vercel Root Directory = `web`** |
-| **Production branch** | `main` |
-| **GCP project** | ID `generative-ai-class-496013` · number `120451862856` · region `europe-west1` |
-| **Vertex service account** | `generative-ai-vertex-user@generative-ai-class-496013.iam.gserviceaccount.com` (role: **Vertex AI User**) |
-| **Model** | `gemini-2.5-flash` (Strategist temp 0.6, Generator 0.8) |
+| **Run locally** | `cd python && python -m venv .venv && pip install -r requirements.txt && streamlit run app.py` — create `python/.env` first (vars below) |
+| **Sanity check** | `cd python && python -c "import app; import src.graph"` (imports cleanly) |
+| **CLI (one-shot)** | `cd python && python -m src.main --brief "…" --out page.html` |
+| **GCP project (Vertex option)** | ID `generative-ai-class-496013` · region `europe-west1` |
+| **Model** | `gemini-2.5-flash` — Strategist temperature **0.6** (focused), Generator **0.8** (creative) |
 
-**Environment variables** (`web/.env.local` locally; Vercel → Settings → Environment Variables in prod):
+**Environment variables** (`python/.env`):
 
 ```
-LLM_PROVIDER=vertex                 # gemini | vertex
+LLM_PROVIDER=gemini                 # gemini | vertex
 GEMINI_MODEL=gemini-2.5-flash
-# Gemini API path:
+# Gemini API path (simplest):
 GEMINI_API_KEY=...                  # free key: aistudio.google.com/apikey
 # Vertex AI path:
 GOOGLE_CLOUD_PROJECT=generative-ai-class-496013
 GOOGLE_CLOUD_LOCATION=europe-west1
-GOOGLE_SERVICE_ACCOUNT_JSON=...     # service-account JSON, raw OR base64 (base64 preferred for Vercel)
+GOOGLE_SERVICE_ACCOUNT_JSON=...     # service-account JSON, raw OR base64 (or use ADC)
 ```
 
-Users can also enter their **own** credentials at runtime via the in-app **Settings** panel
-(stored only in the browser, sent per-request). Full Vertex/GCP setup steps: `web/README.md`.
+Users can also enter their **own** provider/keys at runtime via the in-app **Settings** panel
+(sent per-session, not persisted). Full run steps: `python/README.md`.
 
 ## 5. Rules (non-negotiable)
 
@@ -92,11 +89,12 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
 2. **Clarify before building** on ambiguous, high-impact decisions.
 3. **Conventional Commits:** `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `chore:`.
 4. **Secrets never go in git.** `.env*` is gitignored. Document any new config in the env-var
-   table above (§4) and in `web/README.md`. If a secret is ever exposed, **rotate it**.
-5. **All model calls go through the provider seam** (`web/lib/llm.ts → callModel`) and happen
-   **only server-side** (the API routes). Keys never reach the browser.
-6. **`npm run build` must pass** before merging. Don't mark work done on a red build.
-7. **Keep docs in sync** — update `README.md`, this file, `web/AGENT.md`, and the log below.
+   table above (§4) and in `python/README.md`. If a secret is ever exposed, **rotate it**.
+5. **All model calls go through the provider seam** (`python/src/llm.py → call_model`). Keys stay
+   on the machine running the app; never hard-code them.
+6. **The app must run** before marking work done — `cd python && streamlit run app.py` should
+   start, and `python -c "import app; import src.graph"` should import without error.
+7. **Keep docs in sync** — update `README.md`, this file, `python/README.md`, and the log below.
 8. **Read this file first, every session.** Before doing any work, analyze `AGENT.md` — the
    rules, the current status (§1), the **Open actions** (§6), and the **PROJECT LOG** at the
    bottom — so you know **what has been done and what still needs doing**, then continue from
@@ -106,89 +104,49 @@ Users can also enter their **own** credentials at runtime via the in-app **Setti
 
 ## 6. Open actions / where to continue
 
-- [ ] **Presentation deck (PDF)** — a graded deliverable; **not built yet**. Cover: business
-      problem, value, the two-agent architecture, live demo, results. Use `README.md` +
-      `docs/CODE_GUIDE.md` as source.
-- [ ] **Rehearse the 15-minute live demo** — all 5 members must speak; finish within the limit.
-- [ ] **SECURITY — rotate exposed secrets.** During setup, a **GitHub personal access token**
-      and the **Vertex service-account key** were pasted into chat → treat both as compromised.
-      Revoke/rotate them: GitHub → Settings → Developer settings → Tokens; Google Cloud → IAM →
-      Service Accounts → `generative-ai-vertex-user` → Keys (delete + create new, update
-      `GOOGLE_SERVICE_ACCOUNT_JSON` in Vercel).
+- [ ] **Rehearse the live demo** — all members speak; finish within the time limit. Run the app
+      live (`streamlit run app.py`): describe a business → approve the plan → build the page.
+- [ ] **SECURITY — rotate exposed secrets.** During earlier setup a **GitHub personal access
+      token** and a **Vertex service-account key** were pasted into chat → treat both as
+      compromised. Revoke/rotate: GitHub → Settings → Developer settings → Tokens; Google Cloud →
+      IAM → Service Accounts → Keys (delete + create new).
 - [ ] *(Optional, score-boosting)* a small **eval/metrics** table (latency, a quick quality
-      check), a **custom domain**, and more model options in the picker.
+      check) and more model options in the picker.
 
 ## 7. Useful artifacts & tooling
 
-- **Architecture:** an in-app **Architecture view** (grid icon in the left rail, hover boxes for
-  explanations); a Figma board; and an editable **`docs/architecture.excalidraw`**.
-- **Deploys:** every push to `main` triggers a Vercel build; build logs are in the Vercel
-  dashboard (or via the Vercel MCP integration).
+- **Presentation deck:** `AI_agents_business_presentation.html` — a self-contained, slideable
+  deck (covers the problem, product, the two-agent + LangGraph architecture, and the team).
+- **App docs:** `python/README.md` (run + architecture).
 
 ---
 
 # PROJECT LOG (newest first)
 
-A running record of everything done, so anyone (or an LLM) can see the history and continue.
-All dates 2026-06-27 unless noted.
+A running record of what's been done on this branch, so anyone (or an LLM) can see the history
+and continue.
 
-### Repo cleanup (2026-06-28)
-- Removed the legacy **Python/Streamlit prototype** — `src/`, `frontend/`, `requirements.txt`
-  and `.streamlit/` — which the live app never referenced; the repo is now **web-only**. Trimmed
-  the now-dead Python/Streamlit entries from `.gitignore`. History retains the deleted files.
+### Branch cleanup & docs (2026-06-29)
+- Made `stremlit-langraph` the **Python-only** branch: removed the Next.js `web/` app and the
+  `docs/` folder (both belong to the TypeScript implementation on `main` / `PageForge_V2`).
+- Updated the **presentation deck** (`AI_agents_business_presentation.html`) to the latest version.
+- Rewrote **`README.md`** and this **`AGENT.md`** to describe the Streamlit + LangGraph app and
+  drop all stale Next.js/Vercel/TypeScript content and the dead hosted-demo link.
 
-### Documentation pass
-- Rewrote **`README.md`** for PageForge with the team list and IE-rubric mapping.
-- Rewrote this **`AGENT.md`** into a full context + rules + log file.
-- Added **`docs/CODE_GUIDE.md`** — a detailed, file-by-file annotated walkthrough for the Q&A.
-
-### Architecture view & explainers
-- Built an **in-app Architecture view** as a faithful SVG of the Figma board (dotted background,
-  layered containers, dark boxes with colored borders, labeled elbow connectors).
-- It renders **inline** (keeps the top bar, left rail, and sidebar visible); the rail
-  **Architecture** button toggles it and sits **above** Settings.
-- Added **hover popovers** on each box (dark card) explaining *why it's here / what it does /
-  input / output* for non-technical viewers; fixed the `run` label overlapping a layer heading.
-- Created a **Figma board** ("PageForge — Architecture") and an editable
-  **`docs/architecture.excalidraw`**.
-
-### Branding & polish
-- Added the **IE University logo** (`web/public/ie-logo.png`) as the brand mark and the browser
-  **favicon**; tab title set to "PageForge". Logo is separated from the name (only the name
-  click → new chat), sized up, and shown white in dark mode.
-- Added a **Figma-style custom cursor** (arrow), engineered to avoid double-pointer/lag bugs
-  (native cursor hidden everywhere, direct transform updates, `pointer-events: none`).
-
-### Features
-- **Settings panel** with two tabs: **Credentials** (use your own Gemini key *or* Vertex
-  project) and **About** (IE course disclaimer). Credentials are threaded per-request through
-  `lib/llm.ts → agents → routes`.
-- **Photo upload** dropzone in the plan card; **at least 3 photos required** before building.
-- **Voice input** (Web Speech API) in the composer.
-- **Conversation history** sidebar (saved in localStorage) with **rename/delete**; a left
-  **rail** with sidebar-toggle + full-screen; **model picker** moved into the composer as a
-  rounded custom dropdown; clicking the brand starts a new chat.
-
-### Core app build & UI
-- Built the **Next.js 14 + TypeScript app** in `web/`: a **two-agent LangGraph.js pipeline**
-  (Strategist → Generator) behind a **provider seam** (`LLM_PROVIDER=gemini|vertex`), with
-  **SSE streaming**. Generalized the concept from coffee shops to **any small/medium business**.
-- Reworked the UI into a **Gemini-style chat** with explicit **Plan Mode** (describe → plan →
-  approve → build), **Apple-inspired design tokens**, and **light/dark theme**.
-- Split the backend into **`/api/plan`** (Strategist) and **`/api/generate`** (Generator).
-
-### Infrastructure & deployment
-- Created the **Vercel project** (Root Directory = `web`); set environment variables.
-- Fixed deploy issues in order: pinned the framework to Next.js via **`web/vercel.json`** (fixed
-  a "missing public dir" error); fixed a **TypeScript build error** (redundant `phase`
-  comparison); re-pasted a truncated **`GOOGLE_SERVICE_ACCOUNT_JSON`** and **hardened the
-  credential parser**; **granted the service account the Vertex AI User role** — which was the
-  final blocker. Vertex now works **end-to-end** in `europe-west1`.
-- Set up **Google Cloud**: project `generative-ai-class-496013`, enabled billing + the Vertex AI
-  API, created the service account, stored its key as base64 in `web/.env.local`.
+### Streamlit + LangGraph app
+- Built the **`python/`** app: a **Streamlit** UI (`app.py`) over a **LangGraph** pipeline
+  (`graph.py`) — `strategist → interrupt_before → generator`, compiled with a `MemorySaver`
+  checkpointer so the human-approval pause persists state between the two agents.
+- **Two agents** (`agents.py`): the Strategist (temp 0.6) extracts the business + makes the
+  marketing decisions and picks a design "framer"; the Generator (temp 0.8) builds a single-file
+  HTML landing page from the approved plan + any photos.
+- **Provider seam** (`llm.py`): one `call_model()` targets the Gemini API **or** Vertex AI,
+  switchable by `LLM_PROVIDER` or the in-app Settings panel.
+- **Framer catalog** (`framers.py`): 5 distinct design systems; the Strategist picks one, with a
+  random fallback, editable before building.
+- **CLI runner** (`main.py`): a straight-through graph (no pause) for a one-shot
+  `--brief … --out page.html` run.
 
 ### Project start
-- Decided (with the team) to **pivot** from the cloned Python/Streamlit "BrewPage" prototype to
-  a **Next.js + Vercel** web app, generalized to any SMB.
-- **Cloned `main` fresh** from GitHub and backed up the previous local folder; added the GitHub
-  repo link + token to a gitignored `.env`.
+- Strategy-first, two-agent concept for SMB landing pages: make the marketing decisions first,
+  keep a human approval gate, then execute — the project's core architectural justification.
