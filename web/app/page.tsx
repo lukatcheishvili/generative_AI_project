@@ -44,6 +44,8 @@ interface Conversation {
   id: string;
   title: string;
   brief: string;
+  /** Every prompt the user has sent in this chat, in order (brief + refinements). */
+  messages?: string[];
   plan: Plan | null;
   html: string | null;
   model: string;
@@ -266,6 +268,7 @@ export default function Home() {
   const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const [brief, setBrief] = useState("");
   const [submittedBrief, setSubmittedBrief] = useState("");
+  const [messages, setMessages] = useState<string[]>([]); // chat transcript (user prompts)
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -320,6 +323,7 @@ export default function Home() {
         if (c) {
           setCurrentId(c.id);
           setSubmittedBrief(c.brief);
+          setMessages(c.messages && c.messages.length ? c.messages : c.brief ? [c.brief] : []);
           setPlan(c.plan ? { ...c.plan, framerId: resolveFramerId(c.plan.framerId) } : c.plan);
           setHtml(c.html);
           setModel(c.model);
@@ -447,6 +451,7 @@ export default function Home() {
     setCurrentId(null);
     rememberCurrent(null);
     setSubmittedBrief("");
+    setMessages([]);
     setBrief("");
     setPlan(null);
     setHtml(null);
@@ -461,6 +466,7 @@ export default function Home() {
     setCurrentId(c.id);
     rememberCurrent(c.id);
     setSubmittedBrief(c.brief);
+    setMessages(c.messages && c.messages.length ? c.messages : c.brief ? [c.brief] : []);
     setBrief("");
     // Older saved plans predate framer selection — give them a valid one so the
     // picker stays controlled.
@@ -573,6 +579,7 @@ export default function Home() {
     setCurrentId(id);
     rememberCurrent(id);
     setSubmittedBrief(text);
+    setMessages([text]);
     setBrief("");
     setPlan(null);
     setHtml(null);
@@ -593,6 +600,7 @@ export default function Home() {
             id,
             title: titleFrom(text),
             brief: text,
+            messages: [text],
             plan: newPlan,
             html: null,
             model,
@@ -638,6 +646,7 @@ export default function Home() {
               id: currentId,
               title: titleFrom(submittedBrief),
               brief: submittedBrief,
+              messages,
               plan: cleaned,
               html: builtHtml,
               model,
@@ -657,6 +666,7 @@ export default function Home() {
 
   function editBrief() {
     setBrief(submittedBrief);
+    setMessages([]);
     setPlan(null);
     setHtml(null);
     setSteps([]);
@@ -670,6 +680,8 @@ export default function Home() {
     const instruction = brief.trim();
     if (!instruction || !html) return;
     if (listening) stopVoice();
+    const nextMessages = [...messages, instruction];
+    setMessages(nextMessages);
     setBrief("");
     setError(null);
     setSteps([]);
@@ -695,6 +707,7 @@ export default function Home() {
                 id: currentId,
                 title: titleFrom(submittedBrief),
                 brief: submittedBrief,
+                messages: nextMessages,
                 plan,
                 html: newHtml,
                 model,
@@ -1072,7 +1085,11 @@ export default function Home() {
               </div>
             )}
 
-            {submittedBrief && <div className="user-brief">{submittedBrief}</div>}
+            {messages.map((m, i) => (
+              <div className="user-brief" key={i}>
+                {m}
+              </div>
+            ))}
 
             {error && <div className="banner banner-error">{error}</div>}
 
