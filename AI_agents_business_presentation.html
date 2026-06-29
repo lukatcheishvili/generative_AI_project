@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PageForge — Two-Agent GenAI Presentation</title>
-  <meta name="description" content="PageForge: a strategy-first, two-agent GenAI landing-page generator. Generative AI final project, IE University.">
+  <meta name="description" content="PageForge: a strategy-first, two-agent GenAI landing-page generator built on Streamlit + LangGraph. Generative AI final project, IE University.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Load fonts without blocking render, so the deck shows instantly (falls back to Inter/system if offline). -->
@@ -306,7 +306,7 @@
   <div class="deck-stage" id="deck">
 
     <!-- Slide 1 — Title -->
-    <section class="stage-slide" data-rail-title="Title" data-rail-sub="PageForge" data-notes="Opening. PageForge: a strategy-first, two-agent GenAI generator. A Strategist decides the marketing; a Generator builds the page; a human approves in between. Live at generative-ai-project-puce.vercel.app.">
+    <section class="stage-slide" data-rail-title="Title" data-rail-sub="PageForge" data-notes="Opening. PageForge: a strategy-first, two-agent GenAI generator. A Strategist decides the marketing; a Generator builds the page; a human approves in between. Built on Streamlit + LangGraph, running on Google Gemini behind a swappable provider seam. Runs locally with streamlit run app.py.">
       <div class="slide-shell title-main">
         <div class="slide-top">
           <div class="left"><span class="brand-mark">PF</span><span>Generative AI · Final Project</span></div>
@@ -318,7 +318,7 @@
             <p class="title-lead reveal d2">AI marketing strategy, then a landing page — a strategist that decides and a builder that executes.</p>
           </div>
           <div class="title-meta reveal d3">
-            <div class="col"><span>Live demo</span><strong><a href="https://generative-ai-project-puce.vercel.app" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">pageforge.com</a></strong></div>
+            <div class="col"><span>Run locally</span><strong>streamlit run app.py</strong></div>
             <div class="col"><span>Approach</span><strong>Two-agent · human-in-the-loop</strong></div>
             <div class="title-pills"><span class="pill">2026</span><span class="pill solid">IE University</span></div>
           </div>
@@ -417,11 +417,11 @@
     </section>
 
     <!-- Slide 6 — The Architecture (diagram, ported from the app, with hover popovers) -->
-    <section class="stage-slide arch-slide" data-rail-title="The Architecture" data-rail-sub="Two agents, one approval gate" data-notes="Multi-agent, human-in-the-loop. /api/plan runs the Strategist; a human gate (the editable Plan Card) sits in the middle; /api/generate runs the Generator. Orchestrated as a LangGraph.js graph, streamed live over Server-Sent Events. Hover any box for details.">
+    <section class="stage-slide arch-slide" data-rail-title="The Architecture" data-rail-sub="Two agents, one approval gate" data-notes="Multi-agent, human-in-the-loop, in a single Streamlit process. app.py runs a LangGraph pipeline: the Strategist node writes the plan, then the graph PAUSES at a real interrupt_before gate (state persisted by a MemorySaver checkpointer) so the human edits and approves; on resume the Generator node builds the page. Both nodes call the model through one provider seam, call_model(). Hover any box for details.">
       <div class="slide-shell arch-shell">
         <div class="arch-head reveal d1">
           <h1>PageForge — Architecture</h1>
-          <p>Strategy-first, two-agent landing-page generator · request flow left → right · hover any box for details</p>
+          <p>Strategy-first, two-agent generator on Streamlit + LangGraph · the approval gate is a real LangGraph interrupt · flow left → right · hover any box for details</p>
         </div>
         <div class="arch-svg-wrap reveal d2">
           <svg id="archsvg" viewBox="0 0 1680 880" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -463,7 +463,7 @@
     </section>
 
     <!-- Slide 8 — The Approval Gate (numbered pillars) -->
-    <section class="stage-slide" data-rail-title="The Approval Gate" data-rail-sub="Approve before anything is built" data-notes="A human approves the thinking before a single line is built. The plan card is editable, nothing auto-ships, and it's cheap to correct the strategy before paying to regenerate pages.">
+    <section class="stage-slide" data-rail-title="The Approval Gate" data-rail-sub="A real LangGraph interrupt" data-notes="A human approves the thinking before a single line is built — and it's enforced at runtime, not just in the UI. The graph is compiled with interrupt_before=[generator] and a MemorySaver checkpointer, so it genuinely pauses after the Strategist. The plan card is editable, nothing auto-ships, and it's cheap to correct the strategy before paying to regenerate pages.">
       <div class="slide-shell">
         <div class="slide-top">
           <div class="left"><span class="section-circle">07</span><span>The Approval Gate</span></div>
@@ -474,7 +474,7 @@
           <h2 class="h-display h-sm reveal d2">A human approves the thinking before a single line is built.</h2>
           <div class="pillars">
             <div class="pillar reveal d3"><p class="pn">01</p><h3>Editable</h3><p>The plan card is editable, not take-it-or-leave-it — change anything before you build.</p></div>
-            <div class="pillar reveal d4"><p class="pn">02</p><h3>Gated</h3><p>Nothing auto-ships. The Generator runs only after you press Confirm &amp; build.</p></div>
+            <div class="pillar reveal d4"><p class="pn">02</p><h3>Gated</h3><p>A real <code>interrupt_before</code> pause — the graph stops after the Strategist and the Generator runs only on resume.</p></div>
             <div class="pillar reveal d5"><p class="pn">03</p><h3>Cheap</h3><p>Correct the strategy first; don't pay to regenerate whole pages to fix the thinking.</p></div>
           </div>
         </div>
@@ -501,7 +501,7 @@
           </div>
             <div class="gen-output reveal d4">
               <div class="win">
-                <div class="win-bar"><span></span><span></span><span></span><b>pageforge.com</b></div>
+                <div class="win-bar"><span></span><span></span><span></span><b>localhost:8501</b></div>
                 <div class="win-body pf-app">
                   <div class="pf-top"><span class="pf-brand">PageForge</span><span class="pf-theme"></span></div>
                   <div class="pf-center">
@@ -527,7 +527,7 @@
     </section>
 
     <!-- Slide 10 — The Model (definition rows) -->
-    <section class="stage-slide" data-rail-title="The Model" data-rail-sub="Gemini 2.5 Flash · one seam" data-notes="Gemini 2.5 Flash powers both agents, behind one provider seam: callModel() targets the Gemini API or Vertex AI with one switch, zero agent changes. Production runs on Vertex AI in europe-west1.">
+    <section class="stage-slide" data-rail-title="The Model" data-rail-sub="Gemini 2.5 Flash · one seam" data-notes="Gemini 2.5 Flash powers both agents by default (2.5 Pro and 2.0 Flash are selectable in Settings), behind one provider seam: call_model() targets the Gemini Developer API (google-generativeai) or Vertex AI (vertexai SDK) with one switch and zero agent changes. Vertex defaults to region us-central1.">
       <div class="slide-shell">
         <div class="slide-top">
           <div class="left"><span class="section-circle">09</span><span>The Model</span></div>
@@ -537,9 +537,9 @@
           <p class="eyebrow head-eyebrow reveal d1">09 — The Model</p>
           <h2 class="h-display h-sm reveal d2">Gemini 2.5 Flash, behind one provider seam.</h2>
           <div class="def-list">
-            <div class="def reveal d3"><div class="term"><span class="dl">Model</span><b>Gemini 2.5 Flash</b></div><p>Powers both agents — fast and low-cost, the demo workhorse.</p></div>
-            <div class="def reveal d4"><div class="term"><span class="dl">Seam</span><b>callModel()</b></div><p>Gemini API or Vertex AI — one switch, zero changes to the agents.</p></div>
-            <div class="def reveal d5"><div class="term"><span class="dl">Platform</span><b>Vertex AI</b></div><p>Production path on the google-genai SDK, region europe-west1.</p></div>
+            <div class="def reveal d3"><div class="term"><span class="dl">Model</span><b>Gemini 2.5 Flash</b></div><p>Powers both agents — fast and low-cost; 2.5 Pro &amp; 2.0 Flash in Settings.</p></div>
+            <div class="def reveal d4"><div class="term"><span class="dl">Seam</span><b>call_model()</b></div><p>Gemini API or Vertex AI — one switch, zero changes to the agents.</p></div>
+            <div class="def reveal d5"><div class="term"><span class="dl">Platform</span><b>Vertex AI</b></div><p>On the vertexai SDK (Gemini path uses google-generativeai); region us-central1.</p></div>
           </div>
         </div>
         <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>09 / 14</span></div>
@@ -547,7 +547,7 @@
     </section>
 
     <!-- Slide 11 — The Model Strategy (comparison) -->
-    <section class="stage-slide" data-rail-title="The Model Strategy" data-rail-sub="One model, two temperatures" data-notes="One model, two temperatures: 0.6 keeps the Strategist focused and consistent; 0.8 gives the Generator room to be creative. Keys stay server-side; users can bring their own credentials in Settings.">
+    <section class="stage-slide" data-rail-title="The Model Strategy" data-rail-sub="One model, two temperatures" data-notes="One model, two temperatures: 0.6 keeps the Strategist focused and consistent; 0.8 gives the Generator room to be creative. Keys stay in the Python process and your environment — never sent to a browser or baked into the generated file; users can bring their own credentials via the in-app Settings panel.">
       <div class="slide-shell">
         <div class="slide-top">
           <div class="left"><span class="section-circle">10</span><span>The Model Strategy</span></div>
@@ -560,14 +560,14 @@
             <div class="reveal d3"><div class="temp">0.6</div><div class="clabel">Temperature · Strategist</div><h3>Focused</h3><p>Consistent decisions — the strategy shouldn't wander.</p></div>
             <div class="reveal d4"><div class="temp">0.8</div><div class="clabel">Temperature · Generator</div><h3>Creative</h3><p>Room to be expressive with the page copy and design.</p></div>
           </div>
-          <div class="band reveal d5"><span><b>Keys stay server-side</b> · users can bring their own credentials via Settings</span></div>
+          <div class="band reveal d5"><span><b>Keys stay in the Python process</b> · never sent to a browser or baked into the page · bring your own via the Settings panel</span></div>
         </div>
         <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>10 / 14</span></div>
       </div>
     </section>
 
     <!-- Slide 12 — Real-time & Robust (numbered list) -->
-    <section class="stage-slide" data-rail-title="Real-time & Robust" data-rail-sub="Built to be trusted" data-notes="Built to be trusted, not just to demo: live SSE streaming, typed contracts validated by TypeScript, keys that never leak to the browser, and guardrails everywhere — tolerant parsing, friendly errors, real CTA links.">
+    <section class="stage-slide" data-rail-title="Real-time & Robust" data-rail-sub="Built to be trusted" data-notes="Built to be trusted, not just to demo: live progress via streamed st.status updates (graph.stream stream_mode='updates'), a typed PipelineState TypedDict that validates every node handoff, keys that stay in the process and never reach the browser or the generated file, and guardrails everywhere — tolerant JSON parsing, friendly errors, real CTA links.">
       <div class="slide-shell">
         <div class="slide-top">
           <div class="left"><span class="section-circle">11</span><span>Real-time &amp; Robust</span></div>
@@ -577,40 +577,40 @@
           <p class="eyebrow head-eyebrow reveal d1">11 — Real-time &amp; Robust</p>
           <h2 class="h-display h-sm reveal d2">Built to be trusted, not just to demo.</h2>
           <div class="num-list">
-            <div class="nrow reveal d3"><div class="nn">01</div><h3>Live streaming</h3><p>Server-Sent Events stream each agent's progress and result to the UI in real time.</p></div>
-            <div class="nrow reveal d4"><div class="nn">02</div><h3>Typed contracts</h3><p>Plan and Strategy types validate every handoff — TypeScript catches misuse before deploy.</p></div>
-            <div class="nrow reveal d5"><div class="nn">03</div><h3>Keys never leak</h3><p>Every model call runs server-side; API keys are never sent to the browser.</p></div>
-            <div class="nrow reveal d6"><div class="nn">04</div><h3>Guardrails everywhere</h3><p>Tolerant credential parsing, friendly errors and real CTA links — no dead or broken pages.</p></div>
+            <div class="nrow reveal d3"><div class="nn">01</div><h3>Live progress</h3><p>Streamed st.status updates show each node as it runs (graph.stream, stream_mode="updates").</p></div>
+            <div class="nrow reveal d4"><div class="nn">02</div><h3>Typed state</h3><p>A PipelineState TypedDict carries brief → plan → html, validating every node handoff.</p></div>
+            <div class="nrow reveal d5"><div class="nn">03</div><h3>Keys never leak</h3><p>Every model call runs in the Python process; keys never reach the browser or the generated file.</p></div>
+            <div class="nrow reveal d6"><div class="nn">04</div><h3>Guardrails everywhere</h3><p>Tolerant JSON parsing, friendly errors and real CTA links — no dead or broken pages.</p></div>
           </div>
         </div>
         <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>11 / 14</span></div>
       </div>
     </section>
 
-    <!-- Slide 13 — Live & Deployed (tech strip + hero URL) -->
-    <section class="stage-slide" data-rail-title="Live & Deployed" data-rail-sub="Shipped end-to-end" data-notes="Shipped end-to-end and usable now. Next.js 14 (App Router, TS), LangGraph.js orchestration, Vercel auto-deploys on push to main, and Vertex AI inference in europe-west1. Try the live demo.">
+    <!-- Slide 13 — Run It Locally (tech strip + run command) -->
+    <section class="stage-slide" data-rail-title="Run It Locally" data-rail-sub="Clone it, run it, generate" data-notes="It runs end-to-end on your machine: Streamlit for the UI (app.py), LangGraph for the two-agent pipeline and the interrupt gate, one provider seam to Gemini or Vertex, and a single local command — streamlit run app.py at localhost:8501. Code is on GitHub under python/.">
       <div class="slide-shell">
         <div class="slide-top">
-          <div class="left"><span class="section-circle">12</span><span>Live &amp; Deployed</span></div>
+          <div class="left"><span class="section-circle">12</span><span>Run It Locally</span></div>
           <div class="right"><span class="brand-mark">PF</span><span>PageForge</span></div>
         </div>
         <div class="slide-main">
-          <p class="eyebrow head-eyebrow reveal d1">12 — Live &amp; Deployed</p>
-          <h2 class="h-display h-sm reveal d2">Shipped end-to-end — and you can use it now.</h2>
+          <p class="eyebrow head-eyebrow reveal d1">12 — Run It Locally</p>
+          <h2 class="h-display h-sm reveal d2">Clone it, run it, generate.</h2>
           <div class="tech-strip">
-            <div class="reveal d3"><span class="tl">App Router · TS</span><b>Next.js 14</b><p>Website and backend in one typed project.</p></div>
-            <div class="reveal d4"><span class="tl">Orchestration</span><b>LangGraph.js</b><p>The two-agent pipeline as an explicit graph.</p></div>
-            <div class="reveal d5"><span class="tl">Deploy</span><b>Vercel</b><p>Auto-deploys on every push to main.</p></div>
-            <div class="reveal d6"><span class="tl">Gemini</span><b>Vertex AI</b><p>Production inference in europe-west1.</p></div>
+            <div class="reveal d3"><span class="tl">UI</span><b>Streamlit</b><p>The whole interface in one app.py.</p></div>
+            <div class="reveal d4"><span class="tl">Orchestration</span><b>LangGraph</b><p>Two-agent pipeline with a real interrupt gate.</p></div>
+            <div class="reveal d5"><span class="tl">Provider seam</span><b>Gemini / Vertex</b><p>One switch to either Google backend.</p></div>
+            <div class="reveal d6"><span class="tl">Local-first</span><b>localhost:8501</b><p>No account, no deploy — just run it.</p></div>
           </div>
-          <div class="demo-band reveal d7"><span>Try the live demo</span><div class="demo-links"><a class="live-url" href="https://generative-ai-project-puce.vercel.app" target="_blank" rel="noopener">pageforge.com</a><span class="demo-sep">·</span><a class="live-url" href="https://github.com/lukatcheishvili/generative_AI_project/tree/main" target="_blank" rel="noopener">githubrepo.com</a></div></div>
+          <div class="demo-band reveal d7"><span>Run it</span><div class="demo-links"><span class="live-url">streamlit run app.py</span><span class="demo-sep">·</span><a class="live-url" href="https://github.com/lukatcheishvili/generative_AI_project/tree/main/python" target="_blank" rel="noopener">githubrepo.com</a></div></div>
         </div>
         <div class="slide-bottom"><span>PageForge — Generative AI Final Project</span><span>12 / 14</span></div>
       </div>
     </section>
 
     <!-- Slide 14 — What's Next (roadmap + team) -->
-    <section class="stage-slide" data-rail-title="What's Next" data-rail-sub="Roadmap + team" data-notes="What's next: quality evals, more model options, a custom domain. Team: Ricardo Liévano Pedroza, Cecile Tambey, Luka Tcheishvili, Juan José Rincón Briceño, Nicklas Urban, Michael Alexis Concepcion.">
+    <section class="stage-slide" data-rail-title="What's Next" data-rail-sub="Roadmap + team" data-notes="What's next: quality evals, more model options, and a hosted deploy on Streamlit Community Cloud so it's usable without a local setup. Team: Ricardo Liévano Pedroza, Cecile Tambey, Luka Tcheishvili, Juan José Rincón Briceño, Nicklas Urban, Michael Alexis Concepcion.">
       <div class="slide-shell">
         <div class="slide-top">
           <div class="left"><span class="section-circle">13</span><span>What's Next</span></div>
@@ -622,7 +622,7 @@
           <div class="next-grid">
             <div class="next-item reveal d3"><span class="nx">01</span><h3>Quality evals</h3><p>A small latency + quality metrics table.</p></div>
             <div class="next-item reveal d4"><span class="nx">02</span><h3>More model options</h3><p>Broaden the in-app model picker.</p></div>
-            <div class="next-item reveal d5"><span class="nx">03</span><h3>Custom domain</h3><p>A production home beyond the Vercel URL.</p></div>
+            <div class="next-item reveal d5"><span class="nx">03</span><h3>Hosted deploy</h3><p>A one-click Streamlit Community Cloud URL — no local setup.</p></div>
           </div>
           <div class="team-block">
             <p class="team-label reveal d6">The team</p>
@@ -681,20 +681,20 @@
 
       // Detailed speaker notes (one per slide, in order).
       var NOTES = [
-        "Welcome — this is PageForge, our Generative AI final project. The one-line pitch: describe your business in a sentence and get back a finished, downloadable landing page — but with the marketing strategy decided first and approved by a human before anything is built. The differentiator to plant early: generic AI builders jump straight to generating a page; we deliberately split the job into 'decide' and 'build', with a human checkpoint between them. It's live and usable right now at pageforge.com, running on Google Gemini behind a swappable provider seam. Over the next slides we'll cover the problem, the product, the experience, the architecture, the two agents, and how it's deployed.",
+        "Welcome — this is PageForge, our Generative AI final project. The one-line pitch: describe your business in a sentence and get back a finished, downloadable landing page — but with the marketing strategy decided first and approved by a human before anything is built. The differentiator to plant early: generic AI builders jump straight to generating a page; we deliberately split the job into 'decide' and 'build', with a human checkpoint between them. It's built on Streamlit + LangGraph and runs locally — streamlit run app.py — on Google Gemini behind a swappable provider seam. Over the next slides we'll cover the problem, the product, the experience, the architecture, the two agents, and how to run it.",
         "The problem: small and medium businesses need a web presence but can't afford a strategist or an agency, so they reach for generic AI site builders — which hand them a page with no strategy behind it. Three concrete failures. First, no strategy: these tools skip positioning, target audience and the conversion goal, the decisions that actually make a page convert. Second, templated output: one prompt told to 'make a website' defaults to stock copy and the same rainbow-gradient sameness. Third, no control: the owner never approves the thinking — the AI commits before anyone signs off. PageForge is built to fix exactly these three.",
         "Our answer is a strategy-first generator. Instead of one prompt doing everything at once, PageForge makes the marketing decisions first, lets a human approve them, and only then builds the page. From the user's side it's simple: describe your business in a sentence, a Strategist plans, you approve, a Generator builds — and you get a single downloadable HTML page. The thing to stress is the ordering: decide, approve, build. That sequence is what separates us from every 'type a prompt, get a page' tool.",
         "Here's what the user actually does — we call it Plan Mode, four steps. One: describe your business in plain language, no forms or jargon. Two: the Strategist drafts a marketing plan and shows it to you. Three: you review and edit that plan, then confirm — this is the human gate, and nothing is generated until you press confirm. Four: the Generator turns the approved plan plus your photos into the finished page. The point to land: step three is the trust mechanism — the human keeps control of the one decision that matters.",
         "Why this matters commercially. The 80% of the work that's mechanical — drafting the strategy and building the page — is automated end to end. What stays human is the one high-leverage decision: approving the plan, which takes seconds. The result is agency-grade strategy at a price an SMB could actually afford — strategy they'd otherwise never get. And it's low risk: because nothing ships until it's approved, you avoid off-brand or runaway output. So: automate the 80%, keep the one decision that matters, and de-risk the result.",
-        "This is the system end to end — multi-agent with a human-in-the-loop gate; in the live deck you can hover any box for details. Flow left to right: the browser (chat UI, history & settings, photo upload) talks to the Next.js app on Vercel, which exposes two API routes. /api/plan runs the Strategist; the plan goes to the human gate — the editable Plan Card — and only after you confirm does /api/generate run the Generator. Both agents call the model through one provider seam (lib/llm.ts) targeting either the Gemini API or Vertex AI. The whole pipeline is expressed as a LangGraph.js graph, and every step streams its progress live to the UI over Server-Sent Events.",
+        "This is the system end to end — multi-agent with a human-in-the-loop gate, all inside a single Streamlit process; in the live deck you can hover any box for details. Flow left to right: the Streamlit UI (brief & photos, the plan card, the result) is driven by app.py, which runs a LangGraph pipeline. Phase 1 streams the Strategist node, then the graph PAUSES at a real interrupt_before gate — its state persisted by a MemorySaver checkpointer keyed on a session thread_id. The plan comes back into the editable card; only when you confirm does phase 2 resume the graph and run the Generator node. Both nodes call the model through one provider seam, call_model(), targeting either the Gemini Developer API or Vertex AI. Progress streams to the UI as st.status updates — no servers, no SSE, just one local app.",
         "The Strategist is the first agent — it makes the decisions a brand strategist would. It reads the owner's free-text brief, extracts the business basics, then plans: positioning, target customer, value proposition, tone, conversion goal and key messages. Crucially it decides, it doesn't write — strategy comes before any page copy. And it returns strict JSON, so the rest of the app can trust and validate the handoff. Point at the example plan on the right to make it concrete.",
-        "This is the human-in-the-loop gate, and it's the heart of the 'safe' story. A human approves the thinking before a single line of the page is built. Three properties: it's editable — the plan card is a real form, not take-it-or-leave-it, so you can change anything; it's gated — the Generator only runs after you press Confirm & build, so nothing auto-ships; and it's cheap — you correct the strategy here, before paying to regenerate whole pages to fix the thinking. This is what prevents wasted time and off-brand output.",
+        "This is the human-in-the-loop gate, and it's the heart of the 'safe' story — and here it's enforced at runtime, not just in the UI. The graph is compiled with interrupt_before=[generator] and a MemorySaver checkpointer, so after the Strategist it genuinely pauses and persists its state until a human resumes it. Three properties: it's editable — the plan card is a real form, not take-it-or-leave-it, so you can change anything; it's gated — the Generator node only runs on resume, so nothing auto-ships; and it's cheap — you correct the strategy here, before paying to regenerate whole pages to fix the thinking. This is what prevents wasted time and off-brand output.",
         "The Generator is the second agent — it executes the approved plan and, importantly, it can't change it. Given the strategy and the owner's photos, it writes one self-contained, downloadable HTML page. Four guardrails: a strict design bar (one color story, real fonts, spacing, hover states — no template look); real photos injected via IMAGE_n tokens swapped for the owner's base64 images; no dead buttons — every CTA resolves to a real maps, mailto or booking link; and one downloadable file you can preview and download. The window on the right shows the actual product UI.",
-        "On the model: both agents run on Google Gemini 2.5 Flash — fast and low-cost, which keeps the demo responsive. Everything goes through one provider seam, the callModel() function, so we can switch between the Gemini API and Vertex AI with one setting and zero changes to the agents. In production we run on Vertex AI via the google-genai SDK in europe-west1. The talking point: this seam is what makes the whole thing model- and provider-agnostic.",
-        "One model, but two temperatures — tuned to the job. The Strategist runs at 0.6: focused and consistent, because the strategy shouldn't wander. The Generator runs at 0.8: more room to be creative with the page copy and design. Same model, different settings per agent. And on security: API keys always stay server-side, never reaching the browser, and users can bring their own credentials through the in-app Settings panel.",
-        "We built this to be trusted, not just to demo. Four things. Live streaming: Server-Sent Events push each agent's progress and result to the UI in real time, so the user always sees what's happening. Typed contracts: the Plan and Strategy types validate every handoff, and TypeScript catches misuse before we deploy. Keys never leak: every model call runs server-side. And guardrails everywhere: tolerant credential parsing, friendly error messages, and real CTA links — so there are no dead or broken pages.",
-        "This isn't a prototype — it's shipped end to end and you can use it now. The stack: Next.js 14 with the App Router and TypeScript, so the website and backend live in one typed project; LangGraph.js for the two-agent orchestration; Vercel for hosting, auto-deploying on every push to main; and Vertex AI for production inference in europe-west1. Invite the audience to try the live demo at pageforge.com — ideally do a quick live run here.",
-        "Where we'd take it next: first, quality evals — a small latency and quality metrics table to measure output objectively. Second, more model options in the in-app picker, so users can trade speed for quality. Third, a custom domain to give it a production home beyond the Vercel URL. Close by thanking the audience and introducing the team — Ricardo, Cecile, Luka, Juan José, Nicklas and Michael — then open it up for questions."
+        "On the model: both agents run on Google Gemini 2.5 Flash by default — fast and low-cost, which keeps the demo responsive — and 2.5 Pro and 2.0 Flash are selectable in the Settings panel. Everything goes through one provider seam, the call_model() function in llm.py, so we can switch between the Gemini Developer API (via the google-generativeai SDK) and Vertex AI (via the vertexai SDK, default region us-central1) with one setting and zero changes to the agents. The talking point: this seam is what makes the whole thing model- and provider-agnostic.",
+        "One model, but two temperatures — tuned to the job. The Strategist runs at 0.6: focused and consistent, because the strategy shouldn't wander. The Generator runs at 0.8: more room to be creative with the page copy and design. Same model, different settings per agent. And on security: API keys stay in the Python process and your environment — never sent to a browser and never baked into the generated file — and users can bring their own credentials through the in-app Settings panel.",
+        "We built this to be trusted, not just to demo. Four things. Live progress: streamed st.status updates (graph.stream with stream_mode='updates') show each node as it runs, so the user always sees what's happening. Typed state: a PipelineState TypedDict carries brief → plan → html and validates every node handoff. Keys never leak: every model call runs inside the Python process and never reaches the browser or the generated file. And guardrails everywhere: tolerant JSON parsing, friendly error messages, and real CTA links — so there are no dead or broken pages.",
+        "This isn't a prototype — it runs end to end on your machine today. The stack: Streamlit for the whole UI in one app.py; LangGraph for the two-agent orchestration and the real interrupt gate; one provider seam to either the Gemini API or Vertex AI; and a single local command — pip install -r requirements.txt, then streamlit run app.py at localhost:8501. The code is on GitHub under python/. Ideally do a quick live run here.",
+        "Where we'd take it next: first, quality evals — a small latency and quality metrics table to measure output objectively. Second, more model options in the in-app picker, so users can trade speed for quality. Third, a hosted deploy on Streamlit Community Cloud so people can try it without any local setup. Close by thanking the audience and introducing the team — Ricardo, Cecile, Luka, Juan José, Nicklas and Michael — then open it up for questions."
       ];
 
       try { var t = localStorage.getItem('pf-deck-theme'); if (t) root.setAttribute('data-theme', t); } catch (e) {}
@@ -780,70 +780,70 @@
       var svg = document.getElementById('archsvg');
       if (!svg) return;
       var INS = {
-        chat: { t: "Chat UI",
-          w: "It's the single screen a non-technical owner works with, so the whole product has to be simple and guided. Everything the user does flows from here.",
-          a: "Lets you describe your business in plain words, review and edit the AI's marketing plan, watch live progress, and preview or download the finished landing page.",
-          i: "Your typed or spoken description, your edits to the plan, the photos you attach, and your clicks.",
-          o: "Sends those requests to the backend and shows what comes back — the marketing plan and the final page." },
-        hist: { t: "History & Settings",
-          w: "So your past pages and your own API keys are remembered between visits without needing any account or login.",
-          a: "Saves every generated page and your credential settings directly in the browser (localStorage). Click a past chat to reopen it.",
-          i: "The conversations you create and the credentials you enter in the Settings panel.",
-          o: "Reloads a previous page on demand, and supplies your saved credentials to each request." },
-        photo: { t: "Photo upload",
-          w: "Real photos make the generated page look like an actual brand instead of a generic stock template — a big quality difference.",
-          a: "Lets you attach your own images. Each one is shrunk in the browser and turned into text (base64) so it can be embedded directly inside the single HTML file.",
-          i: "The image files you upload (you're asked for at least 3).",
-          o: "Compact base64 images that the Generator places into the landing page." },
-        front: { t: "Frontend",
-          w: "This is the web app every visitor loads — it draws the whole interface and is the bridge between the user and the AI backend.",
-          a: "A Next.js page (page.tsx) that renders the chat UI and streams the agents' results back to the screen in real time.",
-          i: "User actions from the Chat UI (the brief, the approval, the photos).",
-          o: "Calls to the two API routes (/api/plan, /api/generate) and live on-screen updates as results stream in." },
-        plan: { t: "/api/plan",
-          w: "It keeps the AI 'thinking' step on the server, where the secret API keys live safely and can never reach the browser.",
-          a: "A small backend endpoint (serverless) that runs the Strategist agent and streams its progress and result back live.",
-          i: "Your business brief, the model you picked, and any credentials.",
-          o: "A structured marketing plan (as data), streamed back to the UI for you to approve." },
-        gen: { t: "/api/generate",
-          w: "Building the page is kept separate from planning it, so each step stays simple, testable, and safe.",
-          a: "A second backend endpoint (serverless) that runs the Generator agent and streams the finished page back.",
-          i: "The plan you approved plus your photos.",
-          o: "A complete, self-contained HTML landing page, streamed back to the browser." },
-        strat: { t: "Strategist",
-          w: "Most AI page builders skip strategy and produce generic copy. Forcing a dedicated 'decisions first' agent is what makes this project genuinely useful.",
-          a: "An AI agent (a Gemini prompt) that acts like a brand strategist: it decides positioning, target audience, tone, value proposition, and key messages — before any page is written.",
-          i: "Your free-text description of the business and what you want.",
-          o: "A structured marketing plan (strict JSON) that the app shows you to review." },
-        appr: { t: "Human approval",
-          w: "A human checks and can edit the plan before anything is built. This 'human-in-the-loop' gate prevents wasted time and off-brand output.",
-          a: "A review step in the UI: the plan appears as an editable card, and nothing is generated until you click 'Confirm & build'.",
-          i: "The Strategist's proposed plan.",
-          o: "An approved — and possibly edited — plan, ready for the Generator." },
-        gener: { t: "Generator",
-          w: "It turns the approved strategy into something real and usable: an actual, styled web page the owner can publish.",
-          a: "An AI agent (a Gemini prompt) that acts like a boutique web designer and writes a full, single-file, styled HTML page that executes the strategy precisely.",
-          i: "The approved plan and your photos.",
-          o: "A complete HTML landing page you can preview, open full-size, and download." },
-        seam: { t: "Provider seam",
-          w: "It lets the whole app run on different AI providers without changing any other code — a key piece of technical flexibility.",
-          a: "A single function (callModel) that every AI request goes through. It routes the request to either the Gemini API or Vertex AI based on one setting.",
-          i: "A prompt, the chosen model, and which provider/credentials to use.",
+        brief: { t: "Brief & photos",
+          w: "It's the single screen a non-technical owner starts from, so the whole product has to be simple and guided. Everything begins with one plain-language description.",
+          a: "A Streamlit text box where you describe your business in plain words, plus an optional photo uploader. Each photo is downscaled with Pillow and turned into text (base64) so it can be embedded directly inside the single HTML file.",
+          i: "Your free-text business description and any image files you attach.",
+          o: "The brief and a list of base64 photos, handed to app.py to start the pipeline." },
+        approve: { t: "Plan card",
+          w: "A human checks and can edit the marketing plan before anything is built — this human-in-the-loop step is the heart of the product.",
+          a: "A Streamlit form rendered from the Strategist's plan: every field (positioning, audience, tone, messages, design system) is editable. Nothing is generated until you click 'Confirm & build page'.",
+          i: "The Strategist's proposed plan, read back from the paused graph's state.",
+          o: "An approved — and possibly edited — plan, written back into the graph to resume it." },
+        result: { t: "Result",
+          w: "The whole point: an actual, styled web page the owner can preview and publish — not just a description of one.",
+          a: "A Streamlit tab that renders the finished page inside an embedded component and offers a download button (plus a Strategy tab with the plan as markdown).",
+          i: "The HTML produced by the Generator node.",
+          o: "An on-screen preview and a downloadable, self-contained landing_page.html." },
+        run1: { t: "Plan strategy",
+          w: "Running the Strategist and then pausing — rather than generating everything at once — is what lets a human approve the thinking first.",
+          a: "app.py calls pipeline.stream(initial): the graph runs the Strategist node and then stops at the interrupt_before gate. st.status shows live step labels as nodes run.",
+          i: "The brief, chosen model, credentials and photos (the initial PipelineState).",
+          o: "A paused graph whose persisted state now holds the marketing plan." },
+        app: { t: "app.py",
+          w: "There's no separate frontend and backend here — one Streamlit script is both the UI and the orchestrator, which keeps the whole app small and easy to follow.",
+          a: "The Streamlit script that draws all three phases and drives the LangGraph pipeline. A per-session thread_id plus the graph's MemorySaver checkpointer let it pause after planning and resume after approval.",
+          i: "User actions from the UI (the brief, the edited plan, the photos, the clicks).",
+          o: "Two calls into the compiled graph — run the Strategist, then resume the Generator — and live progress on screen." },
+        run2: { t: "Confirm & build",
+          w: "Building the page is a separate, explicit step that only happens on the approved plan — so nothing off-brand ever ships by accident.",
+          a: "app.py writes the approved plan into the paused graph (update_state) and calls pipeline.stream(None) to RESUME — the Generator node runs from the approved state.",
+          i: "The human-approved plan plus the uploaded photos.",
+          o: "A complete, self-contained HTML landing page, stored in the graph's state." },
+        strat: { t: "strategist_node",
+          w: "Most AI page builders skip strategy and produce generic copy. A dedicated 'decisions first' node is what makes this project genuinely useful.",
+          a: "A LangGraph node (a Gemini prompt at temperature 0.6) that acts like a brand strategist: it decides positioning, target audience, tone, value proposition, key messages and a design system — before any page is written.",
+          i: "Your free-text brief from the PipelineState.",
+          o: "A structured marketing plan (strict JSON, parsed tolerantly) written to state for you to review." },
+        gate: { t: "interrupt_before",
+          w: "This is the human-in-the-loop gate, enforced at runtime — not just a UI convention. LangGraph is genuinely on the hot path here.",
+          a: "The graph is compiled with interrupt_before=[\"generator\"] and a MemorySaver checkpointer, so after the Strategist it PAUSES, persists the state, and waits. It resumes only when app.py streams again.",
+          i: "The Strategist's plan, held in the persisted graph state.",
+          o: "A paused run that the human can inspect, edit and then resume." },
+        gen: { t: "generator_node",
+          w: "It turns the approved strategy into something real and usable: an actual, styled, single-file web page.",
+          a: "A LangGraph node (a Gemini prompt at temperature 0.8) that acts like a boutique web designer. It writes one self-contained HTML page in the chosen design system, swaps IMAGE_n tokens for the real photos, and points every CTA at a real link.",
+          i: "The approved plan and the base64 photos from state.",
+          o: "A complete HTML landing page you can preview and download." },
+        seam: { t: "call_model()",
+          w: "It lets the whole app run on different AI providers without touching the graph or the agents — a key piece of technical flexibility.",
+          a: "A single function in llm.py that every model request goes through. It routes to either the Gemini Developer API or Vertex AI based on LLM_PROVIDER (or a per-session override).",
+          i: "A prompt, a temperature, the chosen model, and which provider/credentials to use.",
           o: "The model's text response, from whichever provider is currently selected." },
         gemapi: { t: "Gemini API",
           w: "The quickest, easiest way to run the app — anyone can get a free key and start generating.",
-          a: "Google's hosted Gemini service, accessed with a single API key.",
-          i: "Prompts plus a Gemini API key (the app's, or your own from Settings).",
+          a: "Google's hosted Gemini Developer API, reached via the google-generativeai SDK with a single API key.",
+          i: "Prompts plus a Gemini API key (GEMINI_API_KEY, or your own from Settings).",
           o: "Generated text — the marketing plan, or the HTML page." },
         vertex: { t: "Vertex AI",
           w: "The enterprise-grade option: it runs on your own Google Cloud project with proper service-account security and region control.",
-          a: "Google Cloud's Vertex AI, accessed with a service-account credential and a chosen region.",
-          i: "Prompts plus your Cloud project ID, region, and service-account credentials.",
+          a: "Google Cloud's Vertex AI, reached via the vertexai SDK with a service account (or local Application Default Credentials) and a chosen region.",
+          i: "Prompts plus your Cloud project id, region, and service-account credentials.",
           o: "Generated text — the marketing plan, or the HTML page." },
-        flash: { t: "Google Gemini Models",
+        flash: { t: "Gemini 2.5 Flash",
           w: "This is the actual 'brain' — the model that writes both the strategy and the page.",
-          a: "Google's Gemini 2.5 Flash model. It's fast and cheap, which keeps the demo responsive. Temperature is lower for the Strategist (focused) and higher for the Generator (creative).",
-          i: "The carefully written prompts sent by the Strategist and Generator agents.",
+          a: "Google's Gemini 2.5 Flash (the default; 2.5 Pro and 2.0 Flash are also selectable in Settings). Fast and low-cost, which keeps the demo responsive. Temperature is lower for the Strategist (focused) and higher for the Generator (creative).",
+          i: "The carefully written prompts sent by the Strategist and Generator nodes.",
           o: "The marketing-plan JSON and the finished HTML landing page." }
       };
       function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
@@ -853,23 +853,23 @@
       var colLeft=[20,356,692,1028,1364], Wc=250, Wb=214, Hb=72, rowCy=[201,446,691];
       var sch={cli:['#10243f','#3b82c4'],ver:['#1b2230','#647389'],agt:['#211a3a','#7c5cff'],prv:['#2a2208','#d4940f'],llm:['#0e2417','#36a35b']};
       var BOX={
-        chat:{c:0,r:0,s:'cli',t:'Chat UI',sub:'composer · plan card · preview'},
-        hist:{c:0,r:1,s:'cli',t:'History & Settings',sub:'stored in localStorage'},
-        photo:{c:0,r:2,s:'cli',t:'Photo upload',sub:'resized to base64'},
-        plan:{c:1,r:0,s:'ver',t:'/api/plan',sub:'Strategist route · SSE'},
-        front:{c:1,r:1,s:'ver',t:'Frontend',sub:'page.tsx · SSR + UI'},
-        gen:{c:1,r:2,s:'ver',t:'/api/generate',sub:'Generator route · SSE'},
-        strat:{c:2,r:0,s:'agt',t:'Strategist',sub:'brief → marketing plan'},
-        appr:{c:2,r:1,s:'agt',t:'Human approval',sub:'edit & confirm the plan'},
-        gener:{c:2,r:2,s:'agt',t:'Generator',sub:'plan + photos → HTML'},
-        seam:{c:3,r:1,s:'prv',t:'Provider seam',sub:'gemini | vertex · per-request creds'},
-        gemapi:{c:4,r:0,s:'llm',t:'Gemini API',sub:'API key'},
-        flash:{c:4,r:1,s:'llm',t:'Google Gemini Models',sub:'Strategist 0.6 · Generator 0.8'},
-        vertex:{c:4,r:2,s:'llm',t:'Vertex AI',sub:'service account · region'}
+        brief:{c:0,r:0,s:'cli',t:'Brief & photos',sub:'text + uploader → base64'},
+        approve:{c:0,r:1,s:'cli',t:'Plan card',sub:'editable · approve'},
+        result:{c:0,r:2,s:'cli',t:'Result',sub:'preview · download'},
+        run1:{c:1,r:0,s:'ver',t:'Plan strategy',sub:'stream() · phase 1'},
+        app:{c:1,r:1,s:'ver',t:'app.py',sub:'session · MemorySaver'},
+        run2:{c:1,r:2,s:'ver',t:'Confirm & build',sub:'resume · phase 2'},
+        strat:{c:2,r:0,s:'agt',t:'strategist_node',sub:'brief → marketing plan'},
+        gate:{c:2,r:1,s:'agt',t:'interrupt_before',sub:'pause for human'},
+        gen:{c:2,r:2,s:'agt',t:'generator_node',sub:'plan + photos → HTML'},
+        seam:{c:3,r:1,s:'prv',t:'call_model()',sub:'gemini | vertex · per-session creds'},
+        gemapi:{c:4,r:0,s:'llm',t:'Gemini API',sub:'google-generativeai · API key'},
+        flash:{c:4,r:1,s:'llm',t:'Gemini 2.5 Flash',sub:'Strategist 0.6 · Generator 0.8'},
+        vertex:{c:4,r:2,s:'llm',t:'Vertex AI',sub:'vertexai · project · region'}
       };
       Object.keys(BOX).forEach(function(k){var b=BOX[k];b.x=colLeft[b.c]+18;b.cy=rowCy[b.r];b.y=b.cy-Hb/2;b.cx=b.x+Wb/2;b.right=b.x+Wb;b.left=b.x;b.top=b.y;b.bottom=b.y+Hb;});
-      var LAYERS=[{c:0,l:'Client · Browser',col:'#2f6fb0'},{c:1,l:'Vercel · Next.js',col:'#475569'},{c:2,l:'Agents · LangGraph',col:'#6b54c9'},{c:3,l:'Provider seam',col:'#b07d12'},{c:4,l:'LLM · Google',col:'#2f8f55'}];
-      var EDGES=[['chat','front','brief · approve','h'],['hist','front','creds','h'],['photo','front','photos','h'],['front','plan','POST','v'],['front','gen','POST','v'],['plan','strat','run','h'],['gen','gener','run','h'],['strat','appr','plan','v'],['appr','gener','approved','v'],['strat','seam','callModel()','h'],['gener','seam','callModel()','h'],['seam','gemapi','','h'],['seam','vertex','','h'],['gemapi','flash','','v'],['vertex','flash','','v']];
+      var LAYERS=[{c:0,l:'Streamlit · UI',col:'#2f6fb0'},{c:1,l:'Streamlit · app.py',col:'#475569'},{c:2,l:'LangGraph · pipeline',col:'#6b54c9'},{c:3,l:'Provider seam',col:'#b07d12'},{c:4,l:'LLM · Google',col:'#2f8f55'}];
+      var EDGES=[['brief','app','brief','h'],['approve','app','approved','h'],['result','app','preview','h'],['app','run1','phase 1','v'],['app','run2','phase 2','v'],['run1','strat','invoke','h'],['run2','gen','invoke','h'],['strat','gate','plan','v'],['gate','gen','approved','v'],['strat','seam','call_model()','h'],['gen','seam','call_model()','h'],['seam','gemapi','','h'],['seam','vertex','','h'],['gemapi','flash','','v'],['vertex','flash','','v']];
 
       function elbowH(s,t){var sx=s.right,sy=s.cy,tx=t.left,ty=t.cy,m=(sx+tx)/2,r=8;
         if(Math.abs(sy-ty)<1)return 'M'+sx+' '+sy+'L'+tx+' '+ty;
