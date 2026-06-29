@@ -1,6 +1,6 @@
 # PageForge — AI Marketing Strategy → Landing Page
 
-> **Live demo:** https://generative-ai-project-puce.vercel.app/
+> **Live demo:** https://generative-ai-project-py.vercel.app/
 
 Final project for the **Generative AI** course at **IE University** — a fully functional MVP
 that solves a real business problem with an **agentic** GenAI architecture and a polished,
