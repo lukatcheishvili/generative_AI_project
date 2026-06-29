@@ -261,16 +261,57 @@ RULES:
 Return ONLY the raw HTML, starting with <!DOCTYPE html>. No markdown fences."""
 
     raw = call_model(prompt, 0.8, model, creds)
-    html = raw.strip().replace("```html", "").replace("```", "").strip()
-    html = inject_images(html, images)
-    return open_links_in_new_tab(html)
+    template = raw.strip().replace("```html", "").replace("```", "").strip()
+    template = open_links_in_new_tab(template)
+    return template, inject_images(template, images)
 
 
 def generator_node(state: PipelineState) -> dict:
-    html = run_generator(
+    template, html = run_generator(
         state["plan"],
         state.get("images") or [],
         state.get("model"),
         state.get("creds"),
     )
-    return {"html": html}
+    return {"html": html, "html_template": template}
+
+
+# --------------------------------------------------------------------------- #
+# Agent 3 — Editor (existing page + free-form instruction -> revised page)    #
+# --------------------------------------------------------------------------- #
+def run_editor(html_template: str, instruction: str, images: list, model=None, creds=None) -> tuple[str, str]:
+    """Revise an already-built page based on a free-form change request.
+
+    Operates on the IMAGE_n-token version of the page, never the version with
+    real photos injected — sending megabytes of base64 through the prompt on
+    every edit would be slow, costly, and risks the model corrupting the data
+    URIs when it echoes the page back.
+    """
+    prompt = f"""You are a senior front-end designer making a revision to an
+existing single-file HTML landing page based on the client's feedback.
+
+CURRENT PAGE (IMAGE_1, IMAGE_2, ... are placeholder tokens for real photos —
+keep each token exactly as-is, in place, unless the request says to add,
+remove, or move a photo):
+\"\"\"
+{html_template}
+\"\"\"
+
+CLIENT'S CHANGE REQUEST:
+\"\"\"
+{instruction}
+\"\"\"
+
+Apply ONLY what was requested. Preserve everything else exactly: structure,
+copy, design system (fonts, colors, spacing, radius), and IMAGE_n tokens,
+unless the request explicitly says otherwise. Stay ONE self-contained HTML
+file, all CSS in a <style> tag, no external JS frameworks. Every CTA anchor
+must keep pointing at its existing href — never replace one with href="#".
+
+Return ONLY the complete, raw, updated HTML, starting with <!DOCTYPE html>.
+No markdown fences, no commentary."""
+
+    raw = call_model(prompt, 0.5, model, creds)
+    template = raw.strip().replace("```html", "").replace("```", "").strip()
+    template = open_links_in_new_tab(template)
+    return template, inject_images(template, images)

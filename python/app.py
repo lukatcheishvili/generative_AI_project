@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 # Allow `from src...` when run as `streamlit run app.py`.
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from src.agents import BUSINESS_GOALS, image_to_data_uri  # noqa: E402
+from src.agents import BUSINESS_GOALS, image_to_data_uri, run_editor  # noqa: E402
 from src.framers import FRAMERS, FRAMER_IDS  # noqa: E402
 from src.graph import STEP_LABELS, get_pipeline  # noqa: E402
 from src.llm import active_provider  # noqa: E402
@@ -62,7 +62,10 @@ def config_for_session() -> dict:
 
 
 def reset_session():
-    for key in ("thread_id", "plan", "html", "images", "model", "creds"):
+    for key in (
+        "thread_id", "plan", "html", "html_template", "images", "model",
+        "creds", "edit_history", "html_undo_stack",
+    ):
         st.session_state.pop(key, None)
 
 
@@ -269,6 +272,7 @@ if "plan" in st.session_state and "html" not in st.session_state:
             snapshot = get_pipeline().get_state(config)
             st.session_state["plan"] = edited_plan
             st.session_state["html"] = snapshot.values["html"]
+            st.session_state["html_template"] = snapshot.values["html_template"]
             box.update(label="Page complete", state="complete")
         st.rerun()
 
@@ -279,10 +283,23 @@ if "plan" in st.session_state and "html" not in st.session_state:
 if "html" in st.session_state:
     plan = st.session_state["plan"]
     html = st.session_state["html"]
+    st.session_state.setdefault("edit_history", [])
+    st.session_state.setdefault("html_undo_stack", [])
 
-    if st.button("Start over"):
-        reset_session()
-        st.rerun()
+    c_reset, c_undo = st.columns([1, 1])
+    with c_reset:
+        if st.button("Start over"):
+            reset_session()
+            st.rerun()
+    with c_undo:
+        if st.session_state["html_undo_stack"]:
+            if st.button("Undo last edit"):
+                prev_template, prev_html = st.session_state["html_undo_stack"].pop()
+                st.session_state["html_template"] = prev_template
+                st.session_state["html"] = prev_html
+                if st.session_state["edit_history"]:
+                    st.session_state["edit_history"].pop()
+                st.rerun()
 
     tab_page, tab_strategy = st.tabs(["Page", "Strategy"])
     with tab_page:
@@ -290,6 +307,32 @@ if "html" in st.session_state:
         st.download_button(
             "Download page (HTML)", html, file_name="landing_page.html", mime="text/html"
         )
+
+        st.markdown('<hr class="pf-rule">', unsafe_allow_html=True)
+        st.markdown("**Not happy with it? Tell the agent what to change.**")
+        for past in st.session_state["edit_history"]:
+            st.markdown(f"- *“{past}”*")
+
+        instruction = st.chat_input(
+            "e.g. Make the hero headline bigger, swap the accent color for green, "
+            "shorten the about section…"
+        )
+        if instruction:
+            st.session_state["html_undo_stack"].append(
+                (st.session_state["html_template"], st.session_state["html"])
+            )
+            with st.spinner("Applying your edit…"):
+                new_template, new_html = run_editor(
+                    st.session_state["html_template"],
+                    instruction,
+                    st.session_state.get("images") or [],
+                    st.session_state["model"],
+                    st.session_state["creds"],
+                )
+            st.session_state["html_template"] = new_template
+            st.session_state["html"] = new_html
+            st.session_state["edit_history"].append(instruction)
+            st.rerun()
     with tab_strategy:
         s = plan["strategy"]
         st.markdown(f"**Positioning** — {s['positioning']}")

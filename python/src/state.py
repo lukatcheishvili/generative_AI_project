@@ -14,4 +14,5 @@ class PipelineState(TypedDict, total=False):
     creds: dict           # optional per-session credential overrides (Settings panel)
     images: list          # base64 data URIs of uploaded photos
     plan: dict            # {business, strategy, framerId} — produced by the Strategist
-    html: str             # the finished landing page — produced by the Generator
+    html: str             # the finished landing page (photos injected) — for display/download
+    html_template: str    # same page with IMAGE_n tokens still in place — what edits operate on
