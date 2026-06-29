@@ -55,6 +55,7 @@ const STORAGE_KEY = "pageforge.conversations";
 const SIDEBAR_KEY = "pageforge.sidebar";
 const SETTINGS_KEY = "pageforge.settings";
 const ARCH_KEY = "pageforge.arch";
+const CURRENT_KEY = "pageforge.current"; // id of the conversation currently open
 
 interface Settings {
   source: "default" | "gemini" | "vertex";
@@ -273,6 +274,7 @@ export default function Home() {
   const [steps, setSteps] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [resultTab, setResultTab] = useState<"page" | "strategy">("page");
+  const [editing, setEditing] = useState(false); // refining the generated page
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -309,7 +311,22 @@ export default function Home() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setConversations(JSON.parse(raw) as Conversation[]);
+      const convs = raw ? (JSON.parse(raw) as Conversation[]) : [];
+      if (convs.length) setConversations(convs);
+      // Restore the conversation that was open, so a refresh keeps you on the same page.
+      const activeId = localStorage.getItem(CURRENT_KEY);
+      if (activeId) {
+        const c = convs.find((x) => x.id === activeId);
+        if (c) {
+          setCurrentId(c.id);
+          setSubmittedBrief(c.brief);
+          setPlan(c.plan ? { ...c.plan, framerId: resolveFramerId(c.plan.framerId) } : c.plan);
+          setHtml(c.html);
+          setModel(c.model);
+          setResultTab("page");
+          setPhase(c.html ? "done" : c.plan ? "plan" : "idle");
+        }
+      }
       const sb = localStorage.getItem(SIDEBAR_KEY);
       if (sb !== null) setSidebarOpen(sb === "1");
       const st = localStorage.getItem(SETTINGS_KEY);
@@ -372,7 +389,8 @@ export default function Home() {
   }, []);
 
   const busy = phase === "planning" || phase === "building";
-  const canSubmit = brief.trim().length > 0 && (phase === "idle" || phase === "done");
+  const canSubmit =
+    brief.trim().length > 0 && !busy && !editing && (phase === "idle" || phase === "done");
   const enoughPhotos = files.length >= 3;
 
   function updateBusiness<K extends keyof Shop>(key: K, value: Shop[K]) {
@@ -387,6 +405,16 @@ export default function Home() {
 
   function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
     setSettings((s) => ({ ...s, [key]: value }));
+  }
+
+  // Remember which conversation is open so a page refresh can restore it.
+  function rememberCurrent(id: string | null) {
+    try {
+      if (id) localStorage.setItem(CURRENT_KEY, id);
+      else localStorage.removeItem(CURRENT_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 
   function upsertConversation(conv: Conversation) {
@@ -417,6 +445,7 @@ export default function Home() {
 
   function newChat() {
     setCurrentId(null);
+    rememberCurrent(null);
     setSubmittedBrief("");
     setBrief("");
     setPlan(null);
@@ -430,6 +459,7 @@ export default function Home() {
 
   function loadConversation(c: Conversation) {
     setCurrentId(c.id);
+    rememberCurrent(c.id);
     setSubmittedBrief(c.brief);
     setBrief("");
     // Older saved plans predate framer selection — give them a valid one so the
@@ -541,6 +571,7 @@ export default function Home() {
     if (listening) stopVoice();
     const id = uid();
     setCurrentId(id);
+    rememberCurrent(id);
     setSubmittedBrief(text);
     setBrief("");
     setPlan(null);
@@ -634,10 +665,65 @@ export default function Home() {
     textareaRef.current?.focus();
   }
 
+  // Refine the already-generated page from a follow-up instruction (no re-plan).
+  async function refinePage() {
+    const instruction = brief.trim();
+    if (!instruction || !html) return;
+    if (listening) stopVoice();
+    setBrief("");
+    setError(null);
+    setSteps([]);
+    setEditing(true);
+    try {
+      await streamSSE(
+        "/api/edit",
+        {
+          html,
+          instruction,
+          strategy: plan?.strategy,
+          model,
+          credentials: credentialsFromSettings(settings),
+        },
+        (event, payload) => {
+          if (event === "progress") setSteps((s) => [...s, payload.label]);
+          else if (event === "done") {
+            const newHtml = payload.html as string;
+            setHtml(newHtml);
+            setResultTab("page");
+            if (currentId && plan) {
+              upsertConversation({
+                id: currentId,
+                title: titleFrom(submittedBrief),
+                brief: submittedBrief,
+                plan,
+                html: newHtml,
+                model,
+                createdAt: Date.now(),
+              });
+            }
+          } else if (event === "error") {
+            setError(payload.message as string);
+          }
+        },
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setEditing(false);
+    }
+  }
+
+  // Send button / Enter: refine the current page when one exists, otherwise plan a new one.
+  function onSend() {
+    if (!canSubmit) return;
+    if (phase === "done") refinePage();
+    else submitBrief();
+  }
+
   function onComposerKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (canSubmit) submitBrief();
+      onSend();
     }
   }
 
@@ -1184,7 +1270,7 @@ export default function Home() {
             )}
 
             {/* Progress */}
-            {busy && (
+            {(busy || editing) && (
               <div className="status">
                 {steps.map((s, i) => (
                   <div className="status-line" key={i}>
@@ -1250,6 +1336,9 @@ export default function Home() {
                       <button className="btn btn-secondary" onClick={confirmBuild}>
                         Regenerate
                       </button>
+                      <button className="btn btn-secondary" onClick={newChat}>
+                        New page
+                      </button>
                     </div>
                   </>
                 ) : (
@@ -1311,11 +1400,11 @@ export default function Home() {
                 rows={1}
                 placeholder={
                   phase === "done"
-                    ? "Describe another business to build a new page…"
+                    ? "Tell the agent how to change the page — e.g. use purple instead of black…"
                     : "Describe your business and what you want…"
                 }
                 value={brief}
-                disabled={busy || phase === "plan"}
+                disabled={busy || editing || phase === "plan"}
                 onChange={(e) => setBrief(e.target.value)}
                 onKeyDown={onComposerKeyDown}
               />
@@ -1401,7 +1490,7 @@ export default function Home() {
                 </div>
                 <button
                   className="send-btn"
-                  onClick={submitBrief}
+                  onClick={onSend}
                   disabled={!canSubmit}
                   aria-label="Send"
                 >
@@ -1414,7 +1503,9 @@ export default function Home() {
             <div className="composer-hint">
               {phase === "plan"
                 ? "Review the plan above, then approve to build."
-                : "PageForge plans the strategy first, then builds on your approval."}
+                : phase === "done"
+                  ? "Keep refining this page — describe a change, or use New page to start fresh."
+                  : "PageForge plans the strategy first, then builds on your approval."}
             </div>
           </div>
         </div>

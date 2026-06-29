@@ -53,3 +53,4 @@ export const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export const PLAN_STEP = "Strategist is analysing your business and planning the strategy…";
 export const BUILD_STEP = "Generator is building your landing page…";
+export const EDIT_STEP = "Applying your change to the page…";

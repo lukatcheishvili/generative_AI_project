@@ -223,3 +223,63 @@ Return ONLY the raw HTML, starting with <!DOCTYPE html>. No markdown fences.`;
   html = injectImages(html, images);
   return openLinksInNewTab(html);
 }
+
+// --------------------------------------------------------------------------- //
+// Agent 3 — Editor (existing page + instruction -> modified page)             //
+// --------------------------------------------------------------------------- //
+
+/** Pull base64 data-URIs out of the HTML so the edit prompt stays small/cheap. */
+function stripDataImages(html: string): { stripped: string; imgs: string[] } {
+  const imgs: string[] = [];
+  const stripped = html.replace(/data:[^"')\s]+/g, (m) => {
+    imgs.push(m);
+    return `__IMG_${imgs.length}__`;
+  });
+  return { stripped, imgs };
+}
+
+/** Put the real base64 images back after the model has edited the page. */
+function restoreDataImages(html: string, imgs: string[]): string {
+  return html.replace(/__IMG_(\d+)__/g, (full, digits: string) => {
+    const idx = parseInt(digits, 10);
+    return idx >= 1 && idx <= imgs.length ? imgs[idx - 1] : full;
+  });
+}
+
+/**
+ * Refine an already-generated landing page from a natural-language instruction
+ * (e.g. "use purple instead of black"). Returns the full updated HTML.
+ */
+export async function runEditor(
+  currentHtml: string,
+  instruction: string,
+  strategy?: Strategy,
+  model?: string,
+  creds?: Credentials,
+): Promise<string> {
+  const { stripped, imgs } = stripDataImages(currentHtml);
+  const prompt = `You are editing an existing, single-file HTML landing page. Apply ONLY the
+change the user asks for and keep everything else exactly as it is — same structure, copy,
+sections and assets — unless the change requires otherwise.
+
+${strategy ? `BRAND STRATEGY (context; keep the page on-brand):\n${JSON.stringify(strategy, null, 2)}\n\n` : ""}USER'S REQUESTED CHANGE:
+"""
+${instruction}
+"""
+
+RULES:
+- Keep it ONE self-contained HTML file: all CSS stays in the <style> tag, no external JS frameworks.
+- Some image src values are placeholders like "__IMG_1__" — keep them EXACTLY as-is and in place
+  (they are swapped for the real photos afterward). Never invent, renumber, or alter them.
+- Make the requested change thoroughly and consistently (e.g. a colour change should update every
+  relevant rule, not just one), but don't redesign the whole page.
+- Return ONLY the full updated HTML, starting with <!DOCTYPE html>. No markdown fences, no commentary.
+
+CURRENT HTML:
+${stripped}`;
+
+  const raw = await callModel(prompt, 0.5, model, creds);
+  let html = raw.trim().replace(/```html/g, "").replace(/```/g, "").trim();
+  html = restoreDataImages(html, imgs);
+  return openLinksInNewTab(html);
+}
